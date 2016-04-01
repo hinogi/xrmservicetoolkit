@@ -194,28 +194,32 @@ export default class Extension {
             }
         }
 
+        /**
+         * Initialize optionsets
+         * 
+         * @param {*} data (description)
+         */
+        function init(data: any): void {
+            let entity: string = Xrm.Page.data.entity.getEntityName().toString().toLowerCase();
+            let configWr: JQuery = jQuery("entity[name=" + entity + "]", data);
 
-        function init(data) {
-            var entity = Xrm.Page.data.entity.getEntityName().toString().toLowerCase();
-            var configWr = jQuery("entity[name=" + entity + "]", data);
-
-            //Convert the XML Data into a JScript object.
-            var parentFields = configWr.children("ParentField");
-            var jsConfig = [];
-            for (var i = 0, ilength = parentFields.length; i < ilength; i++) {
-                var node = parentFields[i];
-                var mapping = {};
+            // Convert the XML Data into a JScript object.
+            let parentFields: JQuery = configWr.children("ParentField");
+            let jsConfig: Array<any> = [];
+            for (let i = 0, ilength = parentFields.length; i < ilength; i++) {
+                let node = parentFields[i];
+                let mapping: any = {};
                 mapping.parent = jQuery(node).attr("id");
                 mapping.dependent = jQuery(node).children("DependentField:first").attr("id");
                 mapping.options = [];
-                var options = jQuery(node).children("Option");
-                for (var a = 0, alength = options.length; a < alength; a++) {
-                    var option = {};
+                let options = jQuery(node).children("Option");
+                for (let a = 0, alength = options.length; a < alength; a++) {
+                    let option: any = {};
                     option.value = jQuery(options[a]).attr("value");
                     option.showOptions = [];
-                    var optionsToShow = jQuery(options[a]).children("ShowOption");
-                    for (var b = 0, blength = optionsToShow.length; b < blength; b++) {
-                        var optionToShow = {};
+                    let optionsToShow = jQuery(options[a]).children("ShowOption");
+                    for (let b = 0, blength = optionsToShow.length; b < blength; b++) {
+                        let optionToShow: any = {};
                         optionToShow.value = jQuery(optionsToShow[b]).attr("value");
                         optionToShow.text = jQuery(optionsToShow[b]).attr("label"); // Label is not used in the code.
 
@@ -227,15 +231,15 @@ export default class Extension {
             }
             // Attach the configuration object to jQueryXrmDependentOptionSet
             // so it will be available for the OnChange events.
-            jQueryXrmDependentOptionSet.config = jsConfig;
+            this.JQueryXrmDependentOptionSet.config = jsConfig;
 
-            //Fire the OnChange event for the mapped optionset fields
+            // Fire the OnChange event for the mapped optionset fields
             // so that the dependent fields are filtered for the current values.
-            for (var depOptionSet in jQueryXrmDependentOptionSet.config) {
-                if (jQueryXrmDependentOptionSet.config.hasOwnProperty(depOptionSet)) {
-                    var parent = jQueryXrmDependentOptionSet.config[depOptionSet].parent;
-                    var child = jQueryXrmDependentOptionSet.config[depOptionSet].dependent;
-                    filterDependentField(parent, child, jQueryXrmDependentOptionSet);
+            for (let depOptionSet in this.JQueryXrmDependentOptionSet.config) {
+                if (this.JQueryXrmDependentOptionSet.config.hasOwnProperty(depOptionSet)) {
+                    let parent = this.JQueryXrmDependentOptionSet.config[depOptionSet].parent;
+                    let child = this.JQueryXrmDependentOptionSet.config[depOptionSet].dependent;
+                    filterDependentField(parent, child, this.JQueryXrmDependentOptionSet);
                 }
             }
         }
@@ -248,35 +252,34 @@ export default class Extension {
             dataType: "xml",
             success: init,
             // ReSharper disable UnusedParameter
-            error: function (xmlHttpRequest, textStatus, errorThrown) {
+            error: (xmlHttpRequest, textStatus, errorThrown) => {
                 // ReSharper restore UnusedParameter
-                alertMessage('Something is wrong to setup the dependent picklist. Please contact your administrator');
+                alertMessage("Something is wrong to setup the dependent picklist. Please contact your administrator");
             }
-        }); //end Ajax
+        }); // end Ajax
     };
 
-    var jQueryXrmCustomFilterView = function (filename) {
-        ///<summary>
-        /// A generic configurable method to add custom filter view to lookup field in crm 2011 instance
-        ///</summary>
-        ///<param name="filename" type="String">
-        /// A JavaScript String corresponding the name of the configuration web resource name in CRM 2011 instance
-        /// </param>
-        if (typeof jQuery === 'undefined') {
-            alertMessage('jQuery is not loaded.\nPlease ensure that jQuery is included\n as web resource in the form load.');
+    /**
+     * (A generic configurable method to add custom filter view to lookup field in crm 2011 instance
+     * 
+     * @param {string} filename A JavaScript String corresponding the name of the configuration web resource name in CRM 2011 instance
+     */
+    JQueryXrmCustomFilterView(filename: string): void {
+        if (typeof jQuery === "undefined") {
+            alertMessage("jQuery is not loaded.\nPlease ensure that jQuery is included\n as web resource in the form load.");
             return;
         }
 
-        function setCustomFilterView(target, entityName, viewName, fetchXml, layoutXml) {
+        function setCustomFilterView(target: string, entityName: string, viewName: string, fetchXml: string, layoutXml: string): void {
             // use randomly generated GUID Id for our new view
-            var viewId = "{1DFB2B35-B07C-44D1-868D-258DEEAB88E2}";
+            let viewId: string = "{1DFB2B35-B07C-44D1-868D-258DEEAB88E2}";
 
             // add the Custom View to the indicated [lookupFieldName] Control
-            Xrm.Page.getControl(target).addCustomView(viewId, entityName, viewName, fetchXml, layoutXml, true);
+            Xrm.Page.getControl<Xrm.Page.LookupControl>(target).addCustomView(viewId, entityName, viewName, fetchXml, layoutXml, true);
         }
 
-        function xmlToString(responseXml) {
-            var xmlString = '';
+        function xmlToString(responseXml: XMLHttpRequest.responseXML): string {
+            let xmlString = "";
             try {
                 if (responseXml != null) {
                     if (typeof XMLSerializer !== "undefined" && typeof responseXml.xml === "undefined") {
@@ -299,16 +302,16 @@ export default class Extension {
             return xmlString;
         }
 
-        function init(data) {
-            var entity = Xrm.Page.data.entity.getEntityName().toString().toLowerCase();
-            var configWr = jQuery("entity[name=" + entity + "]", data);
+        function init(data: any): void {
+            let entity: string = Xrm.Page.data.entity.getEntityName().toString().toLowerCase();
+            let configWr: JQuery = jQuery("entity[name=" + entity + "]", data);
 
-            //Convert the XML Data into a JScript object.
-            var targetFields = configWr.children("TargetField");
-            var jsConfig = [];
-            for (var i = 0, ilength = targetFields.length; i < ilength; i++) {
-                var node = targetFields[i];
-                var mapping = {};
+            // Convert the XML Data into a JScript object.
+            let targetFields = configWr.children("TargetField");
+            let jsConfig: Array<any> = [];
+            for (let i = 0, ilength = targetFields.length; i < ilength; i++) {
+                let node = targetFields[i];
+                let mapping: any = {};
                 mapping.target = jQuery(node).attr("id");
                 mapping.entityName = jQuery(node).attr("viewentity");
                 mapping.viewName = jQuery(node).attr("viewname");
@@ -320,62 +323,62 @@ export default class Extension {
             }
             // Attach the configuration object to JQueryCustomFilterView
             // so it will be available for the OnChange events.
-            jQueryXrmCustomFilterView.config = jsConfig;
+            this.JQueryXrmCustomFilterView.config = jsConfig;
 
-            //Fire the OnChange event for the mapped fields
+            // Fire the OnChange event for the mapped fields
             // so that the lookup dialog are changed with the filtered view for the current values.
-            for (var customFilterView in jQueryXrmCustomFilterView.config) {
-                if (jQueryXrmCustomFilterView.config.hasOwnProperty(customFilterView)) {
-                    var target = jQueryXrmCustomFilterView.config[customFilterView].target;
-                    var entityName = jQueryXrmCustomFilterView.config[customFilterView].entityName;
-                    var viewName = jQueryXrmCustomFilterView.config[customFilterView].viewName;
-                    var dynamic = jQueryXrmCustomFilterView.config[customFilterView].dynamic;
-                    var fetchXml = jQueryXrmCustomFilterView.config[customFilterView].fetchXml;
-                    var layoutXml = jQueryXrmCustomFilterView.config[customFilterView].layoutXml;
+            for (let customFilterView in this.JQueryXrmCustomFilterView.config) {
+                if (this.JQueryXrmCustomFilterView.config.hasOwnProperty(customFilterView)) {
+                    let target = this.JQueryXrmCustomFilterView.config[customFilterView].target;
+                    let entityName = this.JQueryXrmCustomFilterView.config[customFilterView].entityName;
+                    let viewName = this.JQueryXrmCustomFilterView.config[customFilterView].viewName;
+                    let dynamic = this.JQueryXrmCustomFilterView.config[customFilterView].dynamic;
+                    let fetchXml = this.JQueryXrmCustomFilterView.config[customFilterView].fetchXml;
+                    let layoutXml = this.JQueryXrmCustomFilterView.config[customFilterView].layoutXml;
 
-                    //TODO: Adding logics for various field and conditions. More tests required. 
+                    // TODO: Adding logics for various field and conditions. More tests required. 
                     if (dynamic != null) {
-                        for (var a = 0, alength = dynamic.length; a < alength; a++) {
-                            var dynamicControlType = Xrm.Page.getControl(jQuery(dynamic).attr('name')).getControlType();
-                            var fieldValueType = jQuery(dynamic).attr('fieldvaluetype'); //for optionset, name might be used to filter
-                            if (Xrm.Page.getAttribute(jQuery(dynamic).attr('name')).getValue() === null) {
-                                alertMessage(jQuery(dynamic).attr('name') + ' does not have a value. Please put validation logic on the field change to call this function. Only use XrmServiceToolkit.Extension.JQueryXrmCustomFilterView when the field has a value.');
+                        for (let a = 0, alength = dynamic.length; a < alength; a++) {
+                            let dynamicControlType = Xrm.Page.getControl(jQuery(dynamic).attr("name")).getControlType();
+                            let fieldValueType = jQuery(dynamic).attr("fieldvaluetype"); // for optionset, name might be used to filter
+                            if ((<any>Xrm).Page.getAttribute(jQuery(dynamic).attr("name")).getValue() === null) {
+                                alertMessage(jQuery(dynamic).attr("name") + " does not have a value. Please put validation logic on the field change to call this function. Only use XrmServiceToolkit.Extension.JQueryXrmCustomFilterView when the field has a value.");
                                 return;
                             }
-                            var dynamicValue = null;
+                            let dynamicValue: any = null;
                             switch (dynamicControlType) {
-                            case 'standard':
-                                dynamicValue = Xrm.Page.getAttribute(jQuery(dynamic).attr('name')).getValue();
+                            case "standard":
+                                dynamicValue = (<any>Xrm).Page.getAttribute(jQuery(dynamic).attr("name")).getValue();
                                 break;
-                            case 'optionset':
-                                dynamicValue = (fieldValueType != null && fieldValueType === 'label') ? Xrm.Page.getAttribute(jQuery(dynamic).attr('name')).getSelectionOption().text : Xrm.Page.getAttribute(jQuery(dynamic).attr('name')).getValue();
+                            case "optionset":
+                                dynamicValue = (fieldValueType != null && fieldValueType === "label") ? (<any>Xrm).Page.getAttribute(jQuery(dynamic).attr("name")).getSelectionOption().text : (<any>Xrm).Page.getAttribute(jQuery(dynamic).attr("name")).getValue();
                                 break;
-                            case 'lookup':
-                                dynamicValue = (fieldValueType != null && fieldValueType === 'name') ? Xrm.Page.getAttribute(jQuery(dynamic).attr('name')).getValue()[0].name : Xrm.Page.getAttribute(jQuery(dynamic).attr('name')).getValue()[0].id;
+                            case "lookup":
+                                dynamicValue = (fieldValueType != null && fieldValueType === "name") ? (<any>Xrm).Page.getAttribute(jQuery(dynamic).attr("name")).getValue()[0].name : (<any>Xrm).Page.getAttribute(jQuery(dynamic).attr("name")).getValue()[0].id;
                                 break;
                             default:
-                                alertMessage(jQuery(dynamic).attr('name') + " is not supported for filter lookup view. Please change the configuration.");
+                                alertMessage(jQuery(dynamic).attr("name") + " is not supported for filter lookup view. Please change the configuration.");
                                 break;
                             }
 
-                            var operator = jQuery(dynamic).attr('operator');
+                            let operator = jQuery(dynamic).attr("operator");
                             if (operator === null) {
-                                alertMessage('operator is missing in the configuration file. Please fix the issue');
+                                alertMessage("operator is missing in the configuration file. Please fix the issue");
                                 return;
                             }
-                            var dynamicString = jQuery(dynamic).attr('fetchnote');
+                            let dynamicString = jQuery(dynamic).attr("fetchnote");
                             switch (operator.toLowerCase()) {
-                            case 'contains':
-                            case 'does not contain':
-                                dynamicValue = '%' + dynamicValue + '%';
+                            case "contains":
+                            case "does not contain":
+                                dynamicValue = "%" + dynamicValue + "%";
                                 break;
-                            case 'begins with':
-                            case 'does not begin with':
-                                dynamicValue = dynamicValue + '%';
+                            case "begins with":
+                            case "does not begin with":
+                                dynamicValue = dynamicValue + "%";
                                 break;
-                            case 'ends with':
-                            case 'does not end with':
-                                dynamicValue = '%' + dynamicValue;
+                            case "ends with":
+                            case "does not end with":
+                                dynamicValue = "%" + dynamicValue;
                                 break;
                             default:
                                 break;
@@ -385,7 +388,7 @@ export default class Extension {
                         }
                     }
 
-                    //replace the values if required
+                    // replace the values if required
                     setCustomFilterView(target, entityName, viewName, fetchXml, layoutXml);
                 }
             }
@@ -399,61 +402,54 @@ export default class Extension {
             dataType: "xml",
             success: init,
             // ReSharper disable UnusedParameter
-            error: function (xmlHttpRequest, textStatus, errorThrown) {
+            error: (xmlHttpRequest, textStatus, errorThrown) => {
                 // ReSharper restore UnusedParameter
-                alertMessage('Something is wrong to setup the custom filter view. Please contact your administrator');
+                alertMessage("Something is wrong to setup the custom filter view. Please contact your administrator");
             }
-        }); //end Ajax
+        }); // end Ajax
 
     };
 
     // Disable or Enable to insert/edit note for entity. Unsupported because of DOM object edit
-    var jQueryXrmFormatNotesControl = function (allowInsert, allowEdit) {
-        ///<summary>
-        /// A generic configurable method to format the note control in crm 2011 instance
-        ///</summary>
-        ///<param name="allowInsert" type="Boolean">
-        /// A JavaScript boolean to format if the note control allow insert
-        /// </param>
-        ///<param name="allowEdit" type="Boolean">
-        /// A JavaScript boolean to format if the note control allow edit
-        /// </param>
-
+    /**
+     * A generic configurable method to format the note control in crm 2011 instance
+     * 
+     * @param {boolean} allowInsert A JavaScript boolean to format if the note control allow insert
+     * @param {boolean} allowEdit A JavaScript boolean to format if the note control allow edit
+     */
+    JQueryXrmFormatNotesControl(allowInsert: boolean, allowEdit: boolean): void {
         if (Xrm.Page.ui.setFormNotification !== undefined) {
-            alertMessage('XrmServiceToolkit.Extension.JQueryXrmFormatNotesControl is not supported in CRM2013');
+            alertMessage("XrmServiceToolkit.Extension.JQueryXrmFormatNotesControl is not supported in CRM2013");
             return;
         }
 
-        if (typeof jQuery === 'undefined') {
-            alertMessage('jQuery is not loaded.\nPlease ensure that jQuery is included\n as web resource in the form load.');
+        if (typeof jQuery === "undefined") {
+            alertMessage("jQuery is not loaded.\nPlease ensure that jQuery is included\n as web resource in the form load.");
             return;
         }
 
         jQuery.support.cors = true;
 
-        var notescontrol = jQuery('#notescontrol');
+        let notescontrol = jQuery("#notescontrol");
         if (notescontrol === null || notescontrol === undefined) return;
-        var url = notescontrol.attr('url');
-        //if (url === null) return;
+        let url = notescontrol.attr("url");
         if (url != null) {
             if (!allowInsert) {
                 url = url.replace("EnableInsert=true", "EnableInsert=false");
-            }
-            else if (!allowEdit) {
+            } else if (!allowEdit) {
                 url = url.replace("EnableInlineEdit=true", "EnableInlineEdit=false");
             }
-            notescontrol.attr('url', url);
+            notescontrol.attr("url", url);
         } else {
-            var src = notescontrol.attr('src');
+            let src = notescontrol.attr("src");
             if (src != null) {
                 if (!allowInsert) {
                     src = src.replace("EnableInsert=true", "EnableInsert=false");
-                }
-                else if (!allowEdit) {
+                } else if (!allowEdit) {
                     src = src.replace("EnableInlineEdit=true", "EnableInlineEdit=false");
                 }
-                notescontrol.attr('src', src);
+                notescontrol.attr("src", src);
             }
         }
-    };
+    }
 }

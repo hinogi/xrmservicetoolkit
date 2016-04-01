@@ -148,3 +148,4 @@
 */
 
 export {default as Common} from "./Common";
+export {default as Extension} from "./Extension";
