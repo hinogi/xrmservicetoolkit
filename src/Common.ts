@@ -1,32 +1,6 @@
 /// <reference path="../typings/main.d.ts" />
-import Soap from "Soap";
-
-/**
- * Prompt an alert message
- * 
- * @param {string} message Alert message text
- */
-function alertMessage(message: string): void{
-    (Xrm.Utility !== undefined && Xrm.Utility.alertDialog !== undefined) ? (<any>Xrm).Utility.alertDialog(message) : alert(message);
-}
-
-/**
- * Check if two guids are equal
- * 
- * @param {string} guid1 A string represents a guid
- * @param {string} guid2 A string represents a guid
- * @returns {boolean}
- */
-function guidsAreEqual(guid1: string, guid2: string): boolean{
-    let isEqual: boolean;
-    if (guid1 === null || guid2 === null || guid1 === undefined || guid2 === undefined) {
-        isEqual = false;
-    } else {
-        isEqual = guid1.replace(/[{}]/g, "").toLowerCase() === guid2.replace(/[{}]/g, "").toLowerCase();
-    }
-
-    return isEqual;
-}
+import Soap from "./Soap";
+import {alertMessage} from "./Helper";
 
 export default class Common {
 
