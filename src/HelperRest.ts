@@ -116,10 +116,6 @@ export function dateReviver(key: string, value: string): string | Date {
     return value;
 }
 
-export class parameterCheckFactory<T>(parameter: any, message: string): boolean | Error{
-    
-}
-
 /**
  * Private function used to check whether required parameters are null or undefined
  * 
@@ -133,46 +129,40 @@ export function parameterCheck(parameter: any, message: string): void | Error {
     }
 }
 
-export function stringParameterCheck(parameter, message) {
-    ///<summary>
-    /// Private function used to check whether required parameters are null or undefined
-    ///</summary>
-    ///<param name="parameter" type="String">
-    /// The string parameter to check;
-    ///</param>
-    ///<param name="message" type="String">
-    /// The error message text to include when the error is thrown.
-    ///</param>
-    if (typeof parameter != "string") {
+/**
+ * Private function used to check whether required parameters are null or undefined
+ * 
+ * @export
+ * @param {*} parameter The string parameter to check
+ * @param {string} message The error message text to include when the error is thrown
+ */
+export function stringParameterCheck(parameter: any, message: string): void | Error {
+    if (typeof parameter !== "string") {
         throw new Error(message);
     }
 }
 
-export function callbackParameterCheck(callbackParameter, message) {
-    ///<summary>
-    /// Private function used to check whether required callback parameters are functions
-    ///</summary>
-    ///<param name="callbackParameter" type="Function">
-    /// The callback parameter to check;
-    ///</param>
-    ///<param name="message" type="String">
-    /// The error message text to include when the error is thrown.
-    ///</param>
+/**
+ * Private function used to check whether required callback parameters are functions
+ * 
+ * @export
+ * @param {*} callbackParameter The callback parameter to check
+ * @param {string} message The error message text to include when the error is thrown.
+ */
+export function callbackParameterCheck(callbackParameter: any, message: string): void | Error {
     if (typeof callbackParameter !== "function") {
         throw new Error(message);
     }
 }
 
-export function booleanParameterCheck(parameter, message) {
-    ///<summary>
-    /// Private function used to check whether required parameters are null or undefined
-    ///</summary>
-    ///<param name="parameter" type="String">
-    /// The string parameter to check;
-    ///</param>
-    ///<param name="message" type="String">
-    /// The error message text to include when the error is thrown.
-    ///</param>
+/**
+ * Private function used to check whether required parameters are null or undefined
+ * 
+ * @export
+ * @param {*} parameter The boolean parameter to check
+ * @param {string} message The error message text to include when the error is thrown
+ */
+export function booleanParameterCheck(parameter: any, message: string): void | Error {
     if (typeof parameter !== "boolean") {
         throw new Error(message);
     }
