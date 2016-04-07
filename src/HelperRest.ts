@@ -1,4 +1,4 @@
-import {getClientUrl} from "./Helper";
+import {getClientUrl, alertMessage} from "./Helper";
 
 export function htmlEncode(s: string): string {
     let buffer: string = "";
@@ -165,5 +165,94 @@ export function callbackParameterCheck(callbackParameter: any, message: string):
 export function booleanParameterCheck(parameter: any, message: string): void | Error {
     if (typeof parameter !== "boolean") {
         throw new Error(message);
+    }
+}
+
+/**
+ * Get an instance of XMLHttpRequest for all browsers
+ * 
+ * @export
+ * @returns (description)
+ */
+export function getXhr(): XMLHttpRequest | ActiveXObject {
+    if (XMLHttpRequest) {
+        // Chrome, Firefox, IE7+, Opera, Safari
+        // ReSharper disable InconsistentNaming
+        return new XMLHttpRequest();
+        // ReSharper     restore InconsistentNaming
+    }
+    // IE6
+    try {
+        // The latest stable version. It has the best security, performance,
+        // reliability, and W3C conformance. Ships with Vista, and available
+        // with other OS's via downloads and updates.
+        return new ActiveXObject("MSXML2.XMLHTTP.6.0");
+    } catch (e) {
+        try {
+            // The fallback.
+            return new ActiveXObject("MSXML2.XMLHTTP.3.0");
+        } catch (e) {
+            alertMessage("This browser is not AJAX enabled.");
+            return null;
+        }
+    }
+}
+
+export function performRequest(settings) {
+    parameterCheck(settings, "The value passed to the performRequest function settings parameter is null or undefined.");
+    var request = getXhr();
+    request.open(settings.type, settings.url, settings.async);
+    request.setRequestHeader("Accept", "application/json");
+    if (settings.action != null) {
+        request.setRequestHeader("X-HTTP-Method", settings.action);
+    }
+    request.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+
+    if (settings.async) {
+        request.onreadystatechange = function () {
+            if (request.readyState === 4 /*Complete*/) {
+                // Status 201 is for create, status 204/1223 for link and delete.
+                // There appears to be an issue where IE maps the 204 status to 1223
+                // when no content is returned.
+                if (request.status === 204 || request.status === 1223 || request.status === 201) {
+                    settings.success(request);
+                }
+                else {
+                    // Failure
+                    if (settings.error) {
+                        settings.error(errorHandler(request));
+                    }
+                    else {
+                        errorHandler(request);
+                    }
+                }
+            }
+        };
+
+        if (typeof settings.data === "undefined") {
+            request.send();
+        }
+        else {
+            request.send(settings.data);
+        }
+    } else {
+        if (typeof settings.data === "undefined") {
+            request.send();
+        }
+        else {
+            request.send(settings.data);
+        }
+        if (request.status === 204 || request.status === 1223 || request.status === 201) {
+            settings.success(request);
+        }
+        else {
+            // Failure
+            if (settings.error) {
+                settings.error(errorHandler(request));
+            }
+            else {
+                errorHandler(request);
+            }
+        }
     }
 }
