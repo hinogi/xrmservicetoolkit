@@ -116,16 +116,18 @@ export function dateReviver(key: string, value: string): string | Date {
     return value;
 }
 
-export function parameterCheck(parameter, message) {
-    ///<summary>
-    /// Private function used to check whether required parameters are null or undefined
-    ///</summary>
-    ///<param name="parameter" type="Object">
-    /// The parameter to check;
-    ///</param>
-    ///<param name="message" type="String">
-    /// The error message text to include when the error is thrown.
-    ///</param>
+export class parameterCheckFactory<T>(parameter: any, message: string): boolean | Error{
+    
+}
+
+/**
+ * Private function used to check whether required parameters are null or undefined
+ * 
+ * @export
+ * @param parameter The parameter to check
+ * @param message The error message text to include when the error is thrown
+ */
+export function parameterCheck(parameter: any, message: string): void | Error {
     if ((typeof parameter === "undefined") || parameter === null) {
         throw new Error(message);
     }
