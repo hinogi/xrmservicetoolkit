@@ -434,7 +434,7 @@ export function isNodeNull(node: Node): boolean {
     return false;
 }
 
-export function selectNodes(node: any, xPathExpression: XPathExpression): Array<string> {
+export function selectNodes(node: any, xPathExpression: string): Array<string> {
     if (typeof (node.selectNodes) != "undefined") {
         return node.selectNodes(xPathExpression);
     } else {
@@ -758,4 +758,160 @@ export function joinConditionPair(attributes: Array<any>, values: Array<any>): s
         }
     }
     return output.join("");
-};
+}
+
+// Added in 1.4.1 for metadata retrieval
+// Inspired From Microsoft SDK code to retrieve Metadata using JavaScript
+// Copyright (C) Microsoft Corporation.  All rights reserved.
+let arrayElements = [
+    "Attributes",
+    "ManyToManyRelationships",
+    "ManyToOneRelationships",
+    "OneToManyRelationships",
+    "Privileges",
+    "LocalizedLabels",
+    "Options",
+    "Targets"
+];
+
+export function isMetadataArray(elementName: string): boolean {
+    for (var i = 0, ilength = arrayElements.length; i < ilength; i++) {
+        if (elementName === arrayElements[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function getNodeName(node: any): string {
+    if (typeof (node.baseName) !== "undefined") {
+        return node.baseName;
+    } else {
+        return node.localName;
+    }
+}
+
+export function objectifyNode(node: Node): any {
+    //Check for null
+    if (node.attributes != null && node.attributes.length === 1) {
+        if (node.attributes.getNamedItem("i:nil") != null && node.attributes.getNamedItem("i:nil").nodeValue === "true") {
+            return null;
+        }
+    }
+
+    //Check if it is a value
+    if ((node.firstChild != null) && (node.firstChild.nodeType === 3)) {
+        let nodeName: string = getNodeName(node);
+
+        switch (nodeName) {
+            //Integer Values
+            case "ActivityTypeMask":
+            case "ObjectTypeCode":
+            case "ColumnNumber":
+            case "DefaultFormValue":
+            case "MaxValue":
+            case "MinValue":
+            case "MaxLength":
+            case "Order":
+            case "Precision":
+            case "PrecisionSource":
+            case "LanguageCode":
+                return parseInt(node.firstChild.nodeValue, 10);
+                // Boolean values
+            case "AutoRouteToOwnerQueue":
+            case "CanBeChanged":
+            case "CanTriggerWorkflow":
+            case "IsActivity":
+            case "IsActivityParty":
+            case "IsAvailableOffline":
+            case "IsChildEntity":
+            case "IsCustomEntity":
+            case "IsCustomOptionSet":
+            case "IsDocumentManagementEnabled":
+            case "IsEnabledForCharts":
+            case "IsGlobal":
+            case "IsImportable":
+            case "IsIntersect":
+            case "IsManaged":
+            case "IsReadingPaneEnabled":
+            case "IsValidForAdvancedFind":
+            case "CanBeSecuredForCreate":
+            case "CanBeSecuredForRead":
+            case "CanBeSecuredForUpdate":
+            case "IsCustomAttribute":
+            case "IsPrimaryId":
+            case "IsPrimaryName":
+            case "IsSecured":
+            case "IsValidForCreate":
+            case "IsValidForRead":
+            case "IsValidForUpdate":
+            case "IsCustomRelationship":
+            case "CanBeBasic":
+            case "CanBeDeep":
+            case "CanBeGlobal":
+            case "CanBeLocal":
+                return (node.firstChild.nodeValue === "true") ? true : false;
+                //OptionMetadata.Value and BooleanManagedProperty.Value and AttributeRequiredLevelManagedProperty.Value
+            case "Value":
+                //BooleanManagedProperty.Value
+                if ((node.firstChild.nodeValue === "true") || (node.firstChild.nodeValue === "false")) {
+                    return (node.firstChild.nodeValue === "true") ? true : false;
+                }
+                //AttributeRequiredLevelManagedProperty.Value
+                if (
+                        (node.firstChild.nodeValue === "ApplicationRequired") ||
+                        (node.firstChild.nodeValue === "None") ||
+                        (node.firstChild.nodeValue === "Recommended") ||
+                        (node.firstChild.nodeValue === "SystemRequired")
+                    ) {
+                    return node.firstChild.nodeValue;
+                } else {
+                    //OptionMetadata.Value
+                    return parseInt(node.firstChild.nodeValue, 10);
+                }
+                //String values
+            default:
+                return node.firstChild.nodeValue;
+        }
+    }
+
+    //Check if it is a known array
+    if (isMetadataArray(getNodeName(node))) {
+        let arrayValue: Array<string> = [];
+        for (let iii: number = 0, tempLength: number = node.childNodes.length; iii < tempLength; iii++) {
+            let objectTypeName: string;
+            if ((node.childNodes[iii].attributes != null) && (node.childNodes[iii].attributes.getNamedItem("i:type") != null)) {
+                objectTypeName = node.childNodes[iii].attributes.getNamedItem("i:type").nodeValue.split(":")[1];
+            } else {
+                objectTypeName = getNodeName(node.childNodes[iii]);
+            }
+
+            let b = objectifyNode(node.childNodes[iii]);
+            b._type = objectTypeName;
+            arrayValue.push(b);
+
+        }
+
+        return arrayValue;
+    }
+
+    //Null entity description labels are returned as <label/> - not using i:nil = true;
+    if (node.childNodes.length === 0) {
+        return null;
+    }
+
+    //Otherwise return an object
+    let c: any = {};
+    if (node.attributes.getNamedItem("i:type") != null) {
+        c._type = node.attributes.getNamedItem("i:type").nodeValue.split(":")[1];
+    }
+    
+    for (let i: number = 0, ilength: number = node.childNodes.length; i < ilength; i++) {
+        if (node.childNodes[i].nodeType === 3) {
+            c[getNodeName(node.childNodes[i])] = node.childNodes[i].nodeValue;
+        } else {
+            c[getNodeName(node.childNodes[i])] = objectifyNode(node.childNodes[i]);
+        }
+    }
+    return c;
+}
