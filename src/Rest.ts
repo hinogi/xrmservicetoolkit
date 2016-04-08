@@ -1,6 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 
-import {oDataPath, dateReviver, errorHandler, parameterCheck, stringParameterCheck, booleanParameterCheck, callbackParameterCheck, getXhr} from "./HelperRest";
+import {oDataPath, dateReviver, errorHandler, getXhr, performRequest} from "./HelperRest";
+import {parameterCheck, stringParameterCheck, booleanParameterCheck, callbackParameterCheck} from "./ParameterCheck";
 
         // RetrieveMultiple: retrieveMultipleRecords,
         // Associate: associateRecord,
@@ -8,7 +9,7 @@ import {oDataPath, dateReviver, errorHandler, parameterCheck, stringParameterChe
 export default class Rest {
     /**
      * Sends synchronous/asynchronous request to create a new record
-     * 
+     *
      * @param {Object} object A JavaScript object with properties corresponding to the Schema name of
      * entity attributes that are valid for create operations
      * @param {string} type A String representing the name of the entity
@@ -20,7 +21,7 @@ export default class Rest {
      * @param {boolean} async A Boolean representing if the method should run asynchronously or synchronously
      * true means asynchronously. false means synchronously
      */
-    Create(object: Object, type: string, successCallback: Function, errorCallback: Function, async:boolean): void {
+    static Create(object: Object, type: string, successCallback: Function, errorCallback: Function, async:boolean): void {
         parameterCheck(object, "XrmServiceToolkit.REST.createRecord requires the object parameter.");
         stringParameterCheck(type, "XrmServiceToolkit.REST.createRecord requires the type parameter is a string.");
         callbackParameterCheck(successCallback, "XrmServiceToolkit.REST.createRecord requires the successCallback is a function.");
@@ -56,7 +57,7 @@ export default class Rest {
 
     /**
      * Sends synchronous/asynchronous request to retrieve a record
-     * 
+     *
      * @param {string} id A String representing the GUID value for the record to retrieve
      * @param {string} type A String representing the name of the entity
      * @param {string} select A String representing the $select OData System Query Option to control which
@@ -72,7 +73,7 @@ export default class Rest {
      * @param {boolean} async A Boolean representing if the method should run asynchronously or synchronously
      * true means asynchronously. false means synchronously
      */
-    Retrieve(id: string, type: string, select: string, expand: string, successCallback: Function, errorCallback: Function, async: boolean): void {
+    static Retrieve(id: string, type: string, select: string, expand: string, successCallback: Function, errorCallback: Function, async: boolean): void {
         stringParameterCheck(id, "XrmServiceToolkit.REST.retrieveRecord requires the id parameter is a string.");
         stringParameterCheck(type, "XrmServiceToolkit.REST.retrieveRecord requires the type parameter is a string.");
         if (select != null)
@@ -129,7 +130,7 @@ export default class Rest {
 
     /**
      * Sends synchronous/asynchronous request to update a record
-     * 
+     *
      * @param {string} id A String representing the GUID value for the record to update
      * @param {Object} object A JavaScript object with properties corresponding to the Schema name of
      * entity attributes that are valid for create operations
@@ -141,7 +142,7 @@ export default class Rest {
      * @param {boolean} async A Boolean representing if the method should run asynchronously or synchronously
      * true means asynchronously. false means synchronously
      */
-    Update(id: string, object: Object, type: string, successCallback: Function, errorCallback: Function, async: boolean): void {
+    static Update(id: string, object: Object, type: string, successCallback: Function, errorCallback: Function, async: boolean): void {
         stringParameterCheck(id, "XrmServiceToolkit.REST.updateRecord requires the id parameter.");
         parameterCheck(object, "XrmServiceToolkit.REST.updateRecord requires the object parameter.");
         stringParameterCheck(type, "XrmServiceToolkit.REST.updateRecord requires the type parameter.");
@@ -180,7 +181,7 @@ export default class Rest {
 
     /**
      * Sends synchronous/asynchronous request to delete a record
-     * 
+     *
      * @param {string} id A String representing the GUID value for the record to delete
      * @param {string} type A String representing the name of the entity
      * @param {Function} successCallback The function that will be passed through and be called by a successful response.
@@ -190,7 +191,7 @@ export default class Rest {
      * @param {boolean} async A Boolean representing if the method should run asynchronously or synchronously
      * true means asynchronously. false means synchronously
      */
-    Delete(id: string, type: string, successCallback: Function, errorCallback: Function, async: boolean): void {
+    static Delete(id: string, type: string, successCallback: Function, errorCallback: Function, async: boolean): void {
         stringParameterCheck(id, "XrmServiceToolkit.REST.deleteRecord requires the id parameter.");
         stringParameterCheck(type, "XrmServiceToolkit.REST.deleteRecord requires the type parameter.");
         callbackParameterCheck(successCallback, "XrmServiceToolkit.REST.deleteRecord requires the successCallback is a function.");
@@ -226,7 +227,7 @@ export default class Rest {
 
     /**
      * Sends synchronous/asynchronous request to retrieve records
-     * 
+     *
      * @param {string} type The Schema Name of the Entity type record to retrieve.
      * For an Account record, use "Account"
      * @param {string} options A String representing the OData System Query Options to control the data returned
@@ -241,7 +242,7 @@ export default class Rest {
      * @param {boolean} async A Boolean representing if the method should run asynchronously or synchronously
      * true means asynchronously. false means synchronously
      */
-    RetrieveMultiple(type: string, options: string, successCallback: Function, errorCallback: Function, onComplete: Function, async: boolean): void {
+    static RetrieveMultiple(type: string, options: string, successCallback: Function, errorCallback: Function, onComplete: Function, async: boolean): void {
         stringParameterCheck(type, "XrmServiceToolkit.REST.retrieveMultipleRecords requires the type parameter is a string.");
         if (options != null)
             stringParameterCheck(options, "XrmServiceToolkit.REST.retrieveMultipleRecords requires the options parameter is a string.");
@@ -299,49 +300,34 @@ export default class Rest {
         }
     }
 
-    var associateRecord = function (entityid1, odataSetName1, entityid2, odataSetName2, relationship, successCallback, errorCallback, async) {
-        ///<summary>
-        /// Sends synchronous/asynchronous request to associate a record.
-        ///</summary>
-        ///<param name="entityid1" type="string">
-        /// A String representing the GUID value for the record to associate.
-        ///</param>
+    /**
+     * Sends synchronous/asynchronous request to associate a record
+     *
+     * @param {string} entityid1 A String representing the GUID value for the record to associate
+     * @param {string} odataSetName1 A String representing the odataset name for entityid1
+     * @param {string} entityid2 A String representing the GUID value for the record to be associated
+     * @param {string} odataSetName2 A String representing the odataset name for entityid2
+     * @param {string} relationship A String representing the name of the relationship for association
+     * @param {Function} successCallback The function that will be passed through and be called by a successful response.
+     * Nothing will be returned to this function
+     * @param {Function} errorCallback The function that will be passed through and be called by a failed response.
+     * This function must accept an Error object as a parameter
+     * @param {boolean} async A Boolean representing if the method should run asynchronously or synchronously
+     * true means asynchronously. false means synchronously
+     */
+    static Associate(entityid1: string, odataSetName1: string, entityid2: string, odataSetName2: string, relationship: string, successCallback: Function, errorCallback: Function, async: boolean): void {
         parameterCheck(entityid1, "XrmServiceToolkit.REST.associateRecord requires the entityid1 parameter.");
-        ///<param name="odataSetName1" type="string">
-        /// A String representing the odataset name for entityid1
-        ///</param>
         parameterCheck(odataSetName1, "XrmServiceToolkit.REST.associateRecord requires the odataSetName1 parameter.");
-        ///<param name="entityid2" type="string">
-        /// A String representing the GUID value for the record to be associated.
-        ///</param>
         parameterCheck(entityid2, "XrmServiceToolkit.REST.associateRecord requires the entityid2 parameter.");
-        ///<param name="odataSetName2" type="string">
-        /// A String representing the odataset name for entityid2
-        ///</param>
         parameterCheck(odataSetName2, "XrmServiceToolkit.REST.associateRecord requires the odataSetName2 parameter.");
-        ///<param name="relationship" type="string">
-        /// A String representing the name of the relationship for association
-        ///</param>
         parameterCheck(relationship, "XrmServiceToolkit.REST.associateRecord requires the relationship parameter.");
-        ///<param name="successCallback" type="Function">
-        /// The function that will be passed through and be called by a successful response.
-        /// Nothing will be returned to this function.
-        /// </param>
         callbackParameterCheck(successCallback, "XrmServiceToolkit.REST.associateRecord requires the successCallback is a function.");
-        ///<param name="errorCallback" type="Function">
-        /// The function that will be passed through and be called by a failed response.
-        /// This function must accept an Error object as a parameter.
-        /// </param>
         callbackParameterCheck(errorCallback, "XrmServiceToolkit.REST.associateRecord requires the errorCallback is a function.");
-        ///<param name="async" type="Boolean">
-        /// A Boolean representing if the method should run asynchronously or synchronously
-        /// true means asynchronously. false means synchronously
-        /// </param>
         booleanParameterCheck(async, "XrmServiceToolkit.REST.associateRecord requires the async parameter is a boolean");
 
-        var entity2 = {};
+        let entity2: any = {};
         entity2.uri = oDataPath() + "/" + odataSetName2 + "(guid'" + entityid2 + "')";
-        var jsonEntity = window.JSON.stringify(entity2);
+        let jsonEntity = JSON.stringify(entity2);
 
         performRequest({
             type: "POST",
@@ -351,42 +337,29 @@ export default class Rest {
             error: errorCallback,
             async: async
         });
-    };
+    }
 
-    var disassociateRecord = function (entityid1, odataSetName, entityid2, relationship, successCallback, errorCallback, async) {
-        ///<summary>
-        /// Sends synchronous/asynchronous request to disassociate a record.
-        ///</summary>
-        ///<param name="entityid1" type="string">
-        /// A String representing the GUID value for the record to disassociate.
-        ///</param>
+    /**
+     * Sends synchronous/asynchronous request to disassociate a record
+     *
+     * @param {string} entityid1 A String representing the GUID value for the record to disassociate
+     * @param {string} odataSetName A String representing the odataset name for entityid1
+     * @param {string} entityid2 A String representing the GUID value for the record to be disassociated
+     * @param {string} relationship A String representing the name of the relationship for disassociation
+     * @param {Function} successCallback The function that will be passed through and be called by a successful response.
+     * Nothing will be returned to this function
+     * @param {Function} errorCallback The function that will be passed through and be called by a failed response.
+     * This function must accept an Error object as a parameter
+     * @param {boolean} async A Boolean representing if the method should run asynchronously or synchronously
+     * true means asynchronously. false means synchronously
+     */
+    static Disassociate(entityid1: string, odataSetName: string, entityid2: string, relationship: string, successCallback: Function, errorCallback: Function, async: boolean): void {
         parameterCheck(entityid1, "XrmServiceToolkit.REST.disassociateRecord requires the entityid1 parameter.");
-        ///<param name="odataSetName" type="string">
-        /// A String representing the odataset name for entityid1
-        ///</param>
         parameterCheck(odataSetName, "XrmServiceToolkit.REST.disassociateRecord requires the odataSetName parameter.");
-        ///<param name="entityid2" type="string">
-        /// A String representing the GUID value for the record to be disassociated.
-        ///</param>
         parameterCheck(entityid2, "XrmServiceToolkit.REST.disassociateRecord requires the entityid2 parameter.");
-        ///<param name="relationship" type="string">
-        /// A String representing the name of the relationship for disassociation
-        ///</param>
         parameterCheck(relationship, "XrmServiceToolkit.REST.disassociateRecord requires the relationship parameter.");
-        ///<param name="successCallback" type="Function">
-        /// The function that will be passed through and be called by a successful response.
-        /// Nothing will be returned to this function.
-        /// </param>
         callbackParameterCheck(successCallback, "XrmServiceToolkit.REST.disassociateRecord requires the successCallback is a function.");
-        ///<param name="errorCallback" type="Function">
-        /// The function that will be passed through and be called by a failed response.
-        /// This function must accept an Error object as a parameter.
-        /// </param>
         callbackParameterCheck(errorCallback, "XrmServiceToolkit.REST.disassociateRecord requires the errorCallback is a function.");
-        ///<param name="async" type="Boolean">
-        /// A Boolean representing if the method should run asynchronously or synchronously
-        /// true means asynchronously. false means synchronously
-        /// </param>
         booleanParameterCheck(async, "XrmServiceToolkit.REST.disassociateRecord requires the async parameter is a boolean.");
 
         var url = oDataPath() + "/" + odataSetName + "(guid'" + entityid1 + "')/$links/" + relationship + "(guid'" + entityid2 + "')";
@@ -398,5 +371,5 @@ export default class Rest {
             success: successCallback,
             async: async
         });
-    };
+    }
 }

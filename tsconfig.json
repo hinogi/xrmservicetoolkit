@@ -8,10 +8,10 @@
     "preserveConstEnums": true,
     "experimentalDecorators": true,
     "removeComments": false,
-    "sourceMap": true
+    "sourceMap": true,
+    "outDir": "dist"
   },
-  "exclude": [
-    "node_modules",
-    "typings"
+  "files": [
+    "src/Index.ts"
   ]
 }

@@ -4,20 +4,20 @@ import {alertMessage, getClientUrl} from "./Helper";
         // JQueryXrmDependentOptionSet: jQueryXrmDependentOptionSet,
         // JQueryXrmCustomFilterView: jQueryXrmCustomFilterView,
         // JQueryXrmFormatNotesControl: jQueryXrmFormatNotesControl
-        
+
 export default class Extension {
     // jQuery Load Help function to add tooltip for attribute in CRM 2011. Unsupported because of the usage of DOM object edit.
     //****************************************************
 
     /**
-     * A generic configurable method to add tooltip to crm 2011 field. 
-     * 
+     * A generic configurable method to add tooltip to crm 2011 field.
+     *
      * @param {string} filename A JavaScript String corresponding the name of the configuration web resource name in CRM 2011 instance
      * @param {boolean} bDisplayImg A JavaScript boolean corresponding if display a help image for the tooltip
      * @example
      * JQueryLoadHelp('cm_xmlhelpfile', true);
      */
-    JQueryXrmFieldTooltip(filename: string, bDisplayImg: boolean): void {
+    static JQueryXrmFieldTooltip(filename: string, bDisplayImg: boolean): void {
         /*
         This function is used add tooltips to any field in CRM2011.
 
@@ -44,7 +44,7 @@ export default class Extension {
 
         /**
          * Appends a help tooltip to an attribute
-         * 
+         *
          * @param {string} entity Entityname
          * @param {string} attr Attributename
          * @param {string} txt Help description
@@ -90,10 +90,10 @@ export default class Extension {
     // Generic Dependent Option Set Function. Changed from CRM 2011 SDK example
     /**
      * A generic configurable method to configure dependent optionset for CRM 2011 instance
-     * 
+     *
      * @param {string} filename A JavaScript String corresponding the name of the configuration web resource name in CRM 2011 instance
      */
-    JQueryXrmDependentOptionSet(filename: string): void {
+    static JQueryXrmDependentOptionSet(filename: string): void {
         if (typeof jQuery === "undefined") {
             alertMessage("jQuery is not loaded.\nPlease ensure that jQuery is included\n as web resource in the form load.");
             return;
@@ -104,9 +104,9 @@ export default class Extension {
         // ReSharper disable DuplicatingLocalDeclaration
         function filterDependentField(parentField: string, childField: string, jQueryXrmDependentOptionSet: Xrm.Page.OptionSetAttribute) {
             // ReSharper restore DuplicatingLocalDeclaration
-            for (let depOptionSet in jQueryXrmDependentOptionSet.config) {
-                if (jQueryXrmDependentOptionSet.config.hasOwnProperty(depOptionSet)) {
-                    let dependentOptionSet = jQueryXrmDependentOptionSet.config[depOptionSet];
+            for (let depOptionSet in this.JQueryXrmDependentOptionSet.config) {
+                if (this.JQueryXrmDependentOptionSet.config.hasOwnProperty(depOptionSet)) {
+                    let dependentOptionSet = this.JQueryXrmDependentOptionSet.config[depOptionSet];
                     /* Match the parameters to the correct dependent optionset mapping*/
                     if ((dependentOptionSet.parent === parentField) && (dependentOptionSet.dependent === childField)) {
                         /* Get references to the related fields*/
@@ -196,7 +196,7 @@ export default class Extension {
 
         /**
          * Initialize optionsets
-         * 
+         *
          * @param {*} data (description)
          */
         function init(data: any): void {
@@ -261,10 +261,10 @@ export default class Extension {
 
     /**
      * (A generic configurable method to add custom filter view to lookup field in crm 2011 instance
-     * 
+     *
      * @param {string} filename A JavaScript String corresponding the name of the configuration web resource name in CRM 2011 instance
      */
-    JQueryXrmCustomFilterView(filename: string): void {
+    static JQueryXrmCustomFilterView(filename: string): void {
         if (typeof jQuery === "undefined") {
             alertMessage("jQuery is not loaded.\nPlease ensure that jQuery is included\n as web resource in the form load.");
             return;
@@ -278,20 +278,20 @@ export default class Extension {
             Xrm.Page.getControl<Xrm.Page.LookupControl>(target).addCustomView(viewId, entityName, viewName, fetchXml, layoutXml, true);
         }
 
-        function xmlToString(responseXml: XMLHttpRequest.responseXML): string {
+        function xmlToString(responseXml: Node): string {
             let xmlString = "";
             try {
                 if (responseXml != null) {
-                    if (typeof XMLSerializer !== "undefined" && typeof responseXml.xml === "undefined") {
+                    if (typeof XMLSerializer !== "undefined" && typeof (<any>responseXml).xml === "undefined") {
                         // ReSharper disable InconsistentNaming
                         xmlString = (new XMLSerializer()).serializeToString(responseXml);
                         // ReSharper restore InconsistentNaming
                     } else {
-                        if (typeof responseXml.xml !== "undefined") {
+                        if (typeof (<any>responseXml).xml !== "undefined") {
                             xmlString = responseXml.xml;
                         }
-                        else if (typeof responseXml[0].xml !== "undefined") {
-                            xmlString = responseXml[0].xml;
+                        else if (typeof (<any>responseXml)[0].xml !== "undefined") {
+                            xmlString = (<any>responseXml)[0].xml;
                         }
 
                     }
@@ -310,7 +310,7 @@ export default class Extension {
             let targetFields = configWr.children("TargetField");
             let jsConfig: Array<any> = [];
             for (let i = 0, ilength = targetFields.length; i < ilength; i++) {
-                let node = targetFields[i];
+                let node: JQuery = targetFields[i];
                 let mapping: any = {};
                 mapping.target = jQuery(node).attr("id");
                 mapping.entityName = jQuery(node).attr("viewentity");
@@ -336,7 +336,7 @@ export default class Extension {
                     let fetchXml = this.JQueryXrmCustomFilterView.config[customFilterView].fetchXml;
                     let layoutXml = this.JQueryXrmCustomFilterView.config[customFilterView].layoutXml;
 
-                    // TODO: Adding logics for various field and conditions. More tests required. 
+                    // TODO: Adding logics for various field and conditions. More tests required.
                     if (dynamic != null) {
                         for (let a = 0, alength = dynamic.length; a < alength; a++) {
                             let dynamicControlType = Xrm.Page.getControl(jQuery(dynamic).attr("name")).getControlType();
@@ -413,11 +413,11 @@ export default class Extension {
     // Disable or Enable to insert/edit note for entity. Unsupported because of DOM object edit
     /**
      * A generic configurable method to format the note control in crm 2011 instance
-     * 
+     *
      * @param {boolean} allowInsert A JavaScript boolean to format if the note control allow insert
      * @param {boolean} allowEdit A JavaScript boolean to format if the note control allow edit
      */
-    JQueryXrmFormatNotesControl(allowInsert: boolean, allowEdit: boolean): void {
+    static JQueryXrmFormatNotesControl(allowInsert: boolean, allowEdit: boolean): void {
         if (Xrm.Page.ui.setFormNotification !== undefined) {
             alertMessage("XrmServiceToolkit.Extension.JQueryXrmFormatNotesControl is not supported in CRM2013");
             return;

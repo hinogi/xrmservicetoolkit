@@ -50,23 +50,23 @@
 *       New Feature - A change of logic to increase performance when returning large number of records
 *       New Function - XrmServiceToolkit.Soap.QueryAll: Return all available records by query options (>5k+)
 *       New Fix - XrmServiceToolkit.Rest.RetrieveMultiple not returning records more than 50
-*       New Fix - XrmServiceToolkit.Soap.Business error when referring number fields like (int, double, float)     
+*       New Fix - XrmServiceToolkit.Soap.Business error when referring number fields like (int, double, float)
 *       New Fix - XrmServiceToolkit.Soap not handling error message properly
 **********************************************************************************************************
 *   Version: 1.3.2
 *   Date: January, 2013
-*       Dependency: JSON2, jQuery (latest or 1.7.2 above)  
+*       Dependency: JSON2, jQuery (latest or 1.7.2 above)
 *       New Fix - XrmServiceToolkit.Soap cross browser support to initialize soap service
 **********************************************************************************************************
-*   Version: 1.4.0 
+*   Version: 1.4.0
 *   Date: January, 2013
-*       Dependency: JSON2, jQuery (latest or 1.7.2 above)  
+*       Dependency: JSON2, jQuery (latest or 1.7.2 above)
 *       Feature: Add Cross Browser Support for RU12
 *       Tested Platform: IE9, IE10, Chrome Version 24.0.1312.56 m, Firefox 18.0.1
 **********************************************************************************************************
 *   Version: 1.4.1
 *   Date: April, 2013
-*       Dependency: JSON2, jQuery (latest or 1.7.2 above)  
+*       Dependency: JSON2, jQuery (latest or 1.7.2 above)
 *       Tested Platform: IE9, IE10, Chrome Version 26.0.1410.64 m, Firefox 20.0.1
 *       Feature: Add Cross Browser Support for RU12, RU13
 *       New Fix - XrmServiceToolkit.Common.AddNotification method updated for RU12, RU13, still compatible for RU11 below
@@ -147,5 +147,6 @@
 **********************************************************************************************************
 */
 
-export {default as Common} from "./Common";
+export {default as Rest} from "./Rest";
+export {default as Soap} from "./Soap";
 export {default as Extension} from "./Extension";
