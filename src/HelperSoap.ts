@@ -541,7 +541,7 @@ export function xmlToString(responseXml: Node): string {
     return xmlString;
 }
 
-function isArray (input: any): boolean {
+export function isArray (input: any): boolean {
     return input.constructor.toString().indexOf("Array") !== -1;
 }
 
@@ -611,7 +611,7 @@ export function getError(async: boolean, resp: any, internalCallback?: Function)
     }
 }
 
-export function doRequest (soapBody: string, requestType: string, async: boolean, internalCallback: Function): void {
+export function doRequest (soapBody: string, requestType: string, async?: boolean, internalCallback?: Function): void {
     async = async || false;
 
     // Wrap the Soap Body in a soap:Envelope.
@@ -726,3 +726,36 @@ export function fetchMore(fetchCoreXml: string, pageNumber: number, pageCookie: 
         }
     });
 }
+
+export function joinArray(prefix: string, array?: Array<any>, suffix?: string): string {
+    let output: Array<any> = [];
+    for (let i = 0, ilength = array.length; i < ilength; i++) {
+        if (array[i] !== "" && array[i] != undefined) {
+            output.push(prefix, array[i], suffix);
+        }
+    }
+    return output.join("");
+}
+
+export function joinConditionPair(attributes: Array<any>, values: Array<any>): string {
+    let output: Array<string> = [];
+    for (let i = 0, ilength = attributes.length; i < ilength; i++) {
+        if (attributes[i] !== "") {
+            let value1 = values[i];
+            if (typeof value1 == typeof []) {
+                output.push("<condition attribute='", attributes[i], "' operator='in' >");
+
+                for (let valueIndex in value1) {
+                    if (value1.hasOwnProperty(valueIndex)) {
+                        let value = encodeValue(value1[valueIndex]);
+                        output.push("<value>" + value + "</value>");
+                    }
+                }
+                output.push("</condition>");
+            } else if (typeof value1 == typeof "") {
+                output.push("<condition attribute='", attributes[i], "' operator='eq' value='", encodeValue(value1), "' />");
+            }
+        }
+    }
+    return output.join("");
+};

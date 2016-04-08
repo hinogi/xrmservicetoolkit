@@ -1,10 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
-import {alertMessage, htmlEncode, innerSurrogateAmpersandWorkaround, crmXmlDecode, crmXmlEncode, encodeValue} from "./Helper";
-import {xrmEntityReference, businessEntity, doRequest, xmlParser, xmlToString, selectSingleNodeText, selectSingleNode, fetchMore} from "./HelperSoap";
+import {alertMessage, htmlEncode, innerSurrogateAmpersandWorkaround, crmXmlDecode, crmXmlEncode } from "./Helper";
+import {xrmEntityReference, businessEntity, doRequest, xmlParser, xmlToString, selectSingleNodeText, selectSingleNode, getNodeText, selectNodes, fetchMore, isArray, encodeValue, joinArray, joinConditionPair} from "./HelperSoap";
 
-        // RetrieveMultiple: retrieveMultiple,
-        // QueryByAttribute: queryByAttribute,
-        // QueryAll: queryAll,
         // SetState: setState,
         // Assign: assign,
         // RetrievePrincipalAccess: retrievePrincipalAccess,
@@ -343,7 +340,7 @@ export default class Soap{
      * @returns {(void | any)} If sync -> results
      */
     static RetrieveMultiple(query: string, callback: Function): void | any {
-        var request = `
+        let request = `
             <request i:type="a:RetrieveMultipleRequest" xmlns:a="http://schemas.microsoft.com/xrm/2011/Contracts">
                 <a:Parameters xmlns:b="http://schemas.datacontract.org/2004/07/System.Collections.Generic">
                     <a:KeyValuePairOfstringanyType>
@@ -382,227 +379,167 @@ export default class Soap{
         // ReSharper restore NotAllPathsReturnValue
     }
 
-    let joinArray = function (prefix, array, suffix) {
-        let output = [];
-        for (let i = 0, ilength = array.length; i < ilength; i++) {
-            if (array[i] !== "" && array[i] != undefined) {
-                output.push(prefix, array[i], suffix);
-            }
-        }
-        return output.join("");
-    };
-
-    var joinConditionPair = function (attributes, values) {
-        var output = [];
-        for (var i = 0, ilength = attributes.length; i < ilength; i++) {
-            if (attributes[i] !== "") {
-                var value1 = values[i];
-                if (typeof value1 == typeof []) {
-                    output.push("<condition attribute='", attributes[i], "' operator='in' >");
-
-                    for (var valueIndex in value1) {
-                        if (value1.hasOwnProperty(valueIndex)) {
-                            var value = encodeValue(value1[valueIndex]);
-                            output.push("<value>" + value + "</value>");
-                        }
-                    }
-
-                    output.push("</condition>");
-                }
-                else if (typeof value1 == typeof "") {
-                    output.push("<condition attribute='", attributes[i], "' operator='eq' value='", encodeValue(value1), "' />");
-                }
-            }
-        }
-        return output.join("");
-    };
-
-
-
-    var queryByAttribute = function (queryOptions, callback) {
-        ///<summary>
-        /// Sends synchronous/asynchronous request to do a queryByAttribute request.
-        ///</summary>
-        ///<param name="queryOptions" type="Object">
-        /// A JavaScript Object with properties corresponding to the queryByAttribute Criteria
-        /// that are valid for queryByAttribute operations.
-        /// queryOptions.entityName is a string represents the name of the entity
-        /// queryOptions.attributes is a array represents the attributes of the entity to query
-        /// queryOptions.values is a array represents the values of the attributes to query
-        /// queryOptions.columnSet is a array represents the attributes of the entity to return
-        /// queryOptions.orderBy is a array represents the order conditions of the results
-        /// </param>
-        ///<param name="callback" type="Function">
-        /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-        /// </param>
-        var entityName = queryOptions.entityName;
-        var attributes = queryOptions.attributes;
-        var values = queryOptions.values;
-        var columnSet = queryOptions.columnSet;
-        var orderBy = queryOptions.orderBy || '';
+    /**
+     * Sends synchronous/asynchronous request to do a queryByAttribute request
+     *
+     * @static
+     * @param {*} queryOptions A JavaScript Object with properties corresponding to the queryByAttribute Criteria
+     * that are valid for queryByAttribute operations.
+     * queryOptions.entityName is a string represents the name of the entity
+     * queryOptions.attributes is a array represents the attributes of the entity to query
+     * queryOptions.values is a array represents the values of the attributes to query
+     * queryOptions.columnSet is a array represents the attributes of the entity to return
+     * queryOptions.orderBy is a array represents the order conditions of the results
+     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+     */
+    static QueryByAttribute(queryOptions: any, callback: Function): void {
+        let entityName: string = queryOptions.entityName;
+        let attributes: any = queryOptions.attributes;
+        let values: any = queryOptions.values;
+        let columnSet: any = queryOptions.columnSet;
+        let orderBy = queryOptions.orderBy || "";
 
         attributes = isArray(attributes) ? attributes : [attributes];
         values = isArray(values) ? values : [values];
         orderBy = (!!orderBy && isArray(orderBy)) ? orderBy : [orderBy];
         columnSet = (!!columnSet && isArray(columnSet)) ? columnSet : [columnSet];
 
-        var xml =
-                [
-                    "<entity name='", entityName, "'>",
-                            joinArray("<attribute name='", columnSet, "' />"),
-                            joinArray("<order attribute='", orderBy, "' />"),
-                        "<filter>",
-                                joinConditionPair(attributes, values),
-                        "</filter>",
-                    "</entity>"
-                ].join("");
+        var xml =`
+            <entity name="${entityName}">
+                    ${joinArray("<attribute name='", columnSet, "' />")}
+                    ${joinArray("<order attribute='", orderBy, "' />")}
+                <filter>
+                    ${joinConditionPair(attributes, values)}
+                </filter>
+            </entity>
+        `;
 
-        return fetch(xml, false, callback);
+        return this.Fetch(xml, false, callback);
     };
 
-    var queryAll = function (queryOptions, callback) {
-        ///<summary>
-        /// Sends synchronous/asynchronous request to do a queryAll request. This is to return all records (>5k+).
-        /// Consider Performance impact when using this method.
-        ///</summary>
-        ///<param name="queryOptions" type="Object">
-        /// A JavaScript Object with properties corresponding to the queryByAttribute Criteria
-        /// that are valid for queryByAttribute operations.
-        /// queryOptions.entityName is a string represents the name of the entity
-        /// queryOptions.attributes is a array represents the attributes of the entity to query
-        /// queryOptions.values is a array represents the values of the attributes to query
-        /// queryOptions.columnSet is a array represents the attributes of the entity to return
-        /// queryOptions.orderBy is a array represents the order conditions of the results
-        /// </param>
-        ///<param name="callback" type="Function">
-        /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-        /// </param>
-        var entityName = queryOptions.entityName;
-        var attributes = queryOptions.attributes;
-        var values = queryOptions.values;
-        var columnSet = queryOptions.columnSet;
-        var orderBy = queryOptions.orderBy || '';
+    /**
+     * Sends synchronous/asynchronous request to do a queryAll request. This is to return all records (>5k+).
+     * Consider Performance impact when using this method.
+     *
+     * @static
+     * @param {*} queryOptions A JavaScript Object with properties corresponding to the queryByAttribute Criteria
+     * that are valid for queryByAttribute operations.
+     * queryOptions.entityName is a string represents the name of the entity
+     * queryOptions.attributes is a array represents the attributes of the entity to query
+     * queryOptions.values is a array represents the values of the attributes to query
+     * queryOptions.columnSet is a array represents the attributes of the entity to return
+     * queryOptions.orderBy is a array represents the order conditions of the results
+     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+     */
+    static QueryAll(queryOptions: any, callback: Function): void {
+        let entityName: string = queryOptions.entityName;
+        let attributes: Array<any> = queryOptions.attributes;
+        let values: any = queryOptions.values;
+        let columnSet: Array<any> = queryOptions.columnSet;
+        let orderBy: Array<any> = queryOptions.orderBy || '';
 
         attributes = isArray(attributes) ? attributes : [attributes];
         values = isArray(values) ? values : [values];
         orderBy = (!!orderBy && isArray(orderBy)) ? orderBy : [orderBy];
         columnSet = (!!columnSet && isArray(columnSet)) ? columnSet : [columnSet];
 
-        var fetchCore = [
-                    "<entity name='", entityName, "'>",
-                            joinArray("<attribute name='", columnSet, "' />"),
-                            joinArray("<order attribute='", orderBy, "' />"),
-                        "<filter>",
-                                joinConditionPair(attributes, values),
-                        "</filter>",
-                    "</entity>"
-        ].join("");
+        var fetchCore = `
+            <entity name="${entityName}">
+                    ${joinArray("<attribute name='", columnSet, "' />")}
+                    ${joinArray("<order attribute='", orderBy, "' />")}
+                <filter>
+                        ${joinConditionPair(attributes, values)}
+                </filter>
+            </entity>
+        `;
 
+        return this.Fetch(fetchCore, true, callback);
+    }
 
-        var async = !!callback;
+    /**
+     * Sends synchronous/asynchronous request to setState of a record
+     *
+     * @static
+     * @param {string} entityName A JavaScript String corresponding to the Schema name of
+     * entity that is used for setState operations.
+     * @param {string} id A JavaScript String corresponding to the GUID of
+     * entity that is used for setState operations
+     * @param {number} stateCode A JavaScript Integer corresponding to the value of
+     * entity state that is used for setState operations
+     * @param {number} statusCode A JavaScript Integer corresponding to the value of
+     * entity status that is used for setState operations
+     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+     */
+    static SetState(entityName: string, id: string, stateCode: number, statusCode: number, callback: Function): void {
+        var request = `
+            <request i:type="b:SetStateRequest" xmlns:a="http://schemas.microsoft.com/xrm/2011/Contracts" xmlns:b="http://schemas.microsoft.com/crm/2011/Contracts">
+                <a:Parameters xmlns:c="http://schemas.datacontract.org/2004/07/System.Collections.Generic">
+                    <a:KeyValuePairOfstringanyType>
+                        <c:key>EntityMoniker</c:key>
+                        <c:value i:type="a:EntityReference">
+                            <a:Id>${encodeValue(id)}</a:Id>
+                            <a:LogicalName>${entityName}</a:LogicalName>
+                            <a:Name i:nil="true" />
+                        </c:value>
+                        </a:KeyValuePairOfstringanyType>
+                        <a:KeyValuePairOfstringanyType>
+                            <c:key>State</c:key>
+                            <c:value i:type="a:OptionSetValue">
+                             <a:Value>${stateCode.toString()}</a:Value>
+                            </c:value>
+                        </a:KeyValuePairOfstringanyType>
+                        <a:KeyValuePairOfstringanyType>
+                            <c:key>Status</c:key>
+                            <c:value i:type="a:OptionSetValue">
+                             <a:Value>${statusCode.toString()}</a:Value>
+                            </c:value>
+                        </a:KeyValuePairOfstringanyType>
+                </a:Parameters>
+                <a:RequestId i:nil="true" />
+                <a:RequestName>SetState</a:RequestName>
+            </request>
+       `;
 
-        return fetch(fetchCore, true, async);
-    };
+        let async = !!callback;
 
-    var setState = function (entityName, id, stateCode, statusCode, callback) {
-        ///<summary>
-        /// Sends synchronous/asynchronous request to setState of a record.
-        ///</summary>
-        ///<param name="entityName" type="String">
-        /// A JavaScript String corresponding to the Schema name of
-        /// entity that is used for setState operations.
-        /// </param>
-        ///<param name="id" type="String">
-        /// A JavaScript String corresponding to the GUID of
-        /// entity that is used for setState operations.
-        /// </param>
-        ///<param name="stateCode" type="Int">
-        /// A JavaScript Integer corresponding to the value of
-        /// entity state that is used for setState operations.
-        /// </param>
-        ///<param name="statusCode" type="Int">
-        /// A JavaScript Integer corresponding to the value of
-        /// entity status that is used for setState operations.
-        /// </param>
-        ///<param name="callback" type="Function">
-        /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-        /// </param>
-        var request = [
-            "<request i:type='b:SetStateRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-                "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-                    "<a:KeyValuePairOfstringanyType>",
-                        "<c:key>EntityMoniker</c:key>",
-                        "<c:value i:type='a:EntityReference'>",
-                            "<a:Id>", encodeValue(id), "</a:Id>",
-                            "<a:LogicalName>", entityName, "</a:LogicalName>",
-                            "<a:Name i:nil='true' />",
-                        "</c:value>",
-                        "</a:KeyValuePairOfstringanyType>",
-                        "<a:KeyValuePairOfstringanyType>",
-                        "<c:key>State</c:key>",
-                        "<c:value i:type='a:OptionSetValue'>",
-                            "<a:Value>", stateCode.toString(), "</a:Value>",
-                        "</c:value>",
-                        "</a:KeyValuePairOfstringanyType>",
-                        "<a:KeyValuePairOfstringanyType>",
-                        "<c:key>Status</c:key>",
-                        "<c:value i:type='a:OptionSetValue'>",
-                            "<a:Value>", statusCode.toString(), "</a:Value>",
-                        "</c:value>",
-                        "</a:KeyValuePairOfstringanyType>",
-                "</a:Parameters>",
-                "<a:RequestId i:nil='true' />",
-                "<a:RequestName>SetState</a:RequestName>",
-            "</request>"
-        ].join("");
-
-        var async = !!callback;
-
-        return doRequest(request, "Execute", async, function (resultXml) {
-            var responseText = selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-            var result = crmXmlDecode(responseText);
-            if (!async)
+        return doRequest(request, "Execute", async, (resultXml: string) => {
+            let responseText = selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+            let result = crmXmlDecode(responseText);
+            if (!async) {
                 return result;
-            else
+            } else {
                 callback(result);
+            }
             // ReSharper disable NotAllPathsReturnValue
         });
         // ReSharper restore NotAllPathsReturnValue
-    };
+    }
 
-    var associate = function (relationshipName, targetEntityName, targetId, relatedEntityName, relatedBusinessEntities, callback) {
-        ///<summary>
-        /// Sends synchronous/asynchronous request to associate records.
-        ///</summary>
-        ///<param name="relationshipName" type="String">
-        /// A JavaScript String corresponding to the relationship name
-        /// that is used for associate operations.
-        /// </param>
-        ///<param name="targetEntityName" type="String">
-        /// A JavaScript String corresponding to the schema name of the target entity
-        /// that is used for associate operations.
-        /// </param>
-        ///<param name="targetId" type="String">
-        /// A JavaScript String corresponding to the GUID of the target entity
-        /// that is used for associate operations.
-        /// </param>
-        ///<param name="relatedEntityName" type="String">
-        /// A JavaScript String corresponding to the schema name of the related entity
-        /// that is used for associate operations.
-        /// </param>
-        ///<param name="relationshipBusinessEntities" type="Array">
-        /// A JavaScript Array corresponding to the collection of the related entities as BusinessEntity
-        /// that is used for associate operations.
-        /// </param>
-        ///<param name="callback" type="Function">
-        /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-        /// </param>
-        var relatedEntities = relatedBusinessEntities;
+    /**
+     * Sends synchronous/asynchronous request to associate records
+     *
+     * @static
+     * @param {string} relationshipName A JavaScript String corresponding to the relationship name
+     * that is used for associate operations
+     * @param {string} targetEntityName A JavaScript String corresponding to the relationship name
+     * that is used for associate operations
+     * @param {string} targetId A JavaScript String corresponding to the GUID of the target entity
+     * that is used for associate operations
+     * @param {string} relatedEntityName A JavaScript String corresponding to the schema name of the related entity
+     * that is used for associate operations
+     * @param {Array<businessEntity>} relatedBusinessEntities A JavaScript Array corresponding to the collection of the related entities as BusinessEntity
+     * that is used for associate operations
+     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+     * @returns {(void | any)} If sync -> results
+     */
+    static Associate(relationshipName: string, targetEntityName: string, targetId: string, relatedEntityName: string, relatedBusinessEntities: Array<businessEntity>, callback: Function): void | any{
+        let relatedEntities = relatedBusinessEntities;
+
 
         relatedEntities = isArray(relatedEntities) ? relatedEntities : [relatedEntities];
 
-        var output = [];
-        for (var i = 0, ilength = relatedEntities.length; i < ilength; i++) {
+        let output: Array<string> = [];
+        for (let i: number = 0, ilength: number = relatedEntities.length; i < ilength; i++) {
             if (relatedEntities[i].id !== "") {
                 output.push("<a:EntityReference>",
                                 "<a:Id>", relatedEntities[i].id, "</a:Id>",
@@ -612,85 +549,77 @@ export default class Soap{
             }
         }
 
-        var relatedXml = output.join("");
+        let relatedXml = output.join("");
 
-        var request = [
-            "<request i:type='a:AssociateRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts'>",
-                "<a:Parameters xmlns:b='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-                    "<a:KeyValuePairOfstringanyType>",
-                        "<b:key>Target</b:key>",
-                        "<b:value i:type='a:EntityReference'>",
-                            "<a:Id>", encodeValue(targetId), "</a:Id>",
-                            "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-                            "<a:Name i:nil='true' />",
-                        "</b:value>",
-                    "</a:KeyValuePairOfstringanyType>",
-                    "<a:KeyValuePairOfstringanyType>",
-                        "<b:key>Relationship</b:key>",
-                        "<b:value i:type='a:Relationship'>",
-                            "<a:PrimaryEntityRole>Referenced</a:PrimaryEntityRole>",
-                            "<a:SchemaName>", relationshipName, "</a:SchemaName>",
-                        "</b:value>",
-                    "</a:KeyValuePairOfstringanyType>",
-                    "<a:KeyValuePairOfstringanyType>",
-                    "<b:key>RelatedEntities</b:key>",
-                    "<b:value i:type='a:EntityReferenceCollection'>",
-                        relatedXml,
-                    "</b:value>",
-                    "</a:KeyValuePairOfstringanyType>",
-                "</a:Parameters>",
-                "<a:RequestId i:nil='true' />",
-                "<a:RequestName>Associate</a:RequestName>",
-            "</request>"
-        ].join("");
+        let request = `
+            <request i:type="a:AssociateRequest" xmlns:a="http://schemas.microsoft.com/xrm/2011/Contracts">
+                <a:Parameters xmlns:b="http://schemas.datacontract.org/2004/07/System.Collections.Generic">
+                    <a:KeyValuePairOfstringanyType>
+                        <b:key>Target</b:key>
+                        <b:value i:type="a:EntityReference">
+                            <a:Id>${encodeValue(targetId)}</a:Id>
+                            <a:LogicalName>${targetEntityName}</a:LogicalName>
+                            <a:Name i:nil="true" />
+                        </b:value>
+                    </a:KeyValuePairOfstringanyType>
+                    <a:KeyValuePairOfstringanyType>
+                        <b:key>Relationship</b:key>
+                        <b:value i:type="a:Relationship">
+                            <a:PrimaryEntityRole>Referenced</a:PrimaryEntityRole>
+                            <a:SchemaName>${relationshipName}</a:SchemaName>
+                        </b:value>
+                    </a:KeyValuePairOfstringanyType>
+                    <a:KeyValuePairOfstringanyType>
+                    <b:key>RelatedEntities</b:key>
+                    <b:value i:type="a:EntityReferenceCollection">
+                        ${relatedXml}
+                    </b:value>
+                    </a:KeyValuePairOfstringanyType>
+                </a:Parameters>
+                <a:RequestId i:nil="true" />
+                <a:RequestName>Associate</a:RequestName>
+            </request>
+        `;
 
-        var async = !!callback;
+        let async = !!callback;
 
-        return doRequest(request, "Execute", async, function (resultXml) {
-            var responseText = selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-            var result = crmXmlDecode(responseText);
-            if (!async)
+        return doRequest(request, "Execute", async, (resultXml: string) => {
+            let responseText = selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+            let result = crmXmlDecode(responseText);
+            if (!async) {
                 return result;
-            else
+            } else {
                 callback(result);
+            }
             // ReSharper disable NotAllPathsReturnValue
         });
         // ReSharper restore NotAllPathsReturnValue
-    };
+    }
 
-    var disassociate = function (relationshipName, targetEntityName, targetId, relatedEntityName, relatedBusinessEntities, callback) {
-        ///<summary>
-        /// Sends synchronous/asynchronous request to disassociate records.
-        ///</summary>
-        ///<param name="relationshipName" type="String">
-        /// A JavaScript String corresponding to the relationship name
-        /// that is used for disassociate operations.
-        /// </param>
-        ///<param name="targetEntityName" type="String">
-        /// A JavaScript String corresponding to the schema name of the target entity
-        /// that is used for disassociate operations.
-        /// </param>
-        ///<param name="targetId" type="String">
-        /// A JavaScript String corresponding to the GUID of the target entity
-        /// that is used for disassociate operations.
-        /// </param>
-        ///<param name="relatedEntityName" type="String">
-        /// A JavaScript String corresponding to the schema name of the related entity
-        /// that is used for disassociate operations.
-        /// </param>
-        ///<param name="relationshipBusinessEntities" type="Array">
-        /// A JavaScript Array corresponding to the collection of the related entities as BusinessEntity
-        /// that is used for disassociate operations.
-        /// </param>
-        ///<param name="callback" type="Function">
-        /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-        /// </param>
-        var relatedEntities = relatedBusinessEntities;
+    /**
+     * Sends synchronous/asynchronous request to disassociate records
+     *
+     * @static
+     * @param {string} relationshipName A JavaScript String corresponding to the relationship name
+     * that is used for associate operations
+     * @param {string} targetEntityName A JavaScript String corresponding to the relationship name
+     * that is used for associate operations
+     * @param {string} targetId A JavaScript String corresponding to the GUID of the target entity
+     * that is used for associate operations
+     * @param {string} relatedEntityName A JavaScript String corresponding to the schema name of the related entity
+     * that is used for associate operations
+     * @param {Array<businessEntity>} relatedBusinessEntities A JavaScript Array corresponding to the collection of the related entities as BusinessEntity
+     * that is used for associate operations
+     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+     * @returns {(void | any)} If sync -> results
+     */
+    static Disassociate(relationshipName: string, targetEntityName: string, targetId: string, relatedEntityName: string, relatedBusinessEntities: Array<businessEntity>, callback: Function): void | any {
+        let relatedEntities = relatedBusinessEntities;
 
         relatedEntities = isArray(relatedEntities) ? relatedEntities : [relatedEntities];
 
-        var output = [];
-        for (var i = 0, ilength = relatedEntities.length; i < ilength; i++) {
+        let output: Array<string> = [];
+        for (let i = 0, ilength = relatedEntities.length; i < ilength; i++) {
             if (relatedEntities[i].id !== "") {
                 output.push("<a:EntityReference>",
                                 "<a:Id>", relatedEntities[i].id, "</a:Id>",
@@ -699,65 +628,67 @@ export default class Soap{
                             "</a:EntityReference>");
             }
         }
-
-        var relatedXml = output.join("");
-
-        var request = [
-            "<request i:type='a:DisassociateRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts'>",
-                "<a:Parameters xmlns:b='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-                    "<a:KeyValuePairOfstringanyType>",
-                        "<b:key>Target</b:key>",
-                        "<b:value i:type='a:EntityReference'>",
-                            "<a:Id>", encodeValue(targetId), "</a:Id>",
-                            "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-                            "<a:Name i:nil='true' />",
-                        "</b:value>",
-                    "</a:KeyValuePairOfstringanyType>",
-                    "<a:KeyValuePairOfstringanyType>",
-                        "<b:key>Relationship</b:key>",
-                        "<b:value i:type='a:Relationship'>",
-                            "<a:PrimaryEntityRole i:nil='true' />",
-                            "<a:SchemaName>", relationshipName, "</a:SchemaName>",
-                        "</b:value>",
-                    "</a:KeyValuePairOfstringanyType>",
-                    "<a:KeyValuePairOfstringanyType>",
-                    "<b:key>RelatedEntities</b:key>",
-                    "<b:value i:type='a:EntityReferenceCollection'>",
-                        relatedXml,
-                    "</b:value>",
-                    "</a:KeyValuePairOfstringanyType>",
-                "</a:Parameters>",
-                "<a:RequestId i:nil='true' />",
-                "<a:RequestName>Disassociate</a:RequestName>",
-            "</request>"
-        ].join("");
+        let relatedXml = output.join("");
+        let request = `
+            <request i:type="a:DisassociateRequest" xmlns:a="http://schemas.microsoft.com/xrm/2011/Contracts">
+                <a:Parameters xmlns:b="http://schemas.datacontract.org/2004/07/System.Collections.Generic">
+                    <a:KeyValuePairOfstringanyType>
+                        <b:key>Target</b:key>
+                        <b:value i:type="a:EntityReference">
+                            <a:Id>${encodeValue(targetId)}</a:Id>
+                            <a:LogicalName>${targetEntityName}</a:LogicalName>
+                            <a:Name i:nil="true" />
+                        </b:value>
+                    </a:KeyValuePairOfstringanyType>
+                    <a:KeyValuePairOfstringanyType>
+                        <b:key>Relationship</b:key>
+                        <b:value i:type="a:Relationship">
+                            <a:PrimaryEntityRole i:nil="true" />
+                            <a:SchemaName>${relationshipName}</a:SchemaName>
+                        </b:value>
+                    </a:KeyValuePairOfstringanyType>
+                    <a:KeyValuePairOfstringanyType>
+                    <b:key>RelatedEntities</b:key>
+                    <b:value i:type="a:EntityReferenceCollection">
+                        ${relatedXml}
+                    </b:value>
+                    </a:KeyValuePairOfstringanyType>
+                </a:Parameters>
+                <a:RequestId i:nil="true" />
+                <a:RequestName>Disassociate</a:RequestName>
+            </request>
+        `;
 
         var async = !!callback;
 
-        return doRequest(request, "Execute", async, function (resultXml) {
+        return doRequest(request, "Execute", async, function (resultXml: string) {
             var responseText = selectSingleNodeText(resultXml, "//ser:ExecuteResult");
             var result = crmXmlDecode(responseText);
-            if (!async)
+            if (!async) {
                 return result;
-            else
+            } else {
                 callback(result);
+            }
             // ReSharper disable NotAllPathsReturnValue
         });
         // ReSharper restore NotAllPathsReturnValue
-    };
+    }
 
-    var getCurrentUserId = function () {
-        ///<summary>
-        /// Sends synchronous request to retrieve the GUID of the current user.
-        ///</summary>
-        var request = [
+    /**
+     * Sends synchronous request to retrieve the GUID of the current user
+     *
+     * @static
+     * @returns {string} (description)
+     */
+    static GetCurrentUserId (): string {
+        let request = [
                 "<request i:type='b:WhoAmIRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
                 "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic' />",
                 "<a:RequestId i:nil='true' />",
                 "<a:RequestName>WhoAmI</a:RequestName>",
                 "</request>"
         ].join("");
-        var xmlDoc = doRequest(request, "Execute");
+        let xmlDoc = doRequest(request, "Execute");
 
         return getNodeText(selectNodes(xmlDoc, "//b:value")[0]);
 
