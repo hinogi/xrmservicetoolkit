@@ -705,7 +705,7 @@ export function fetchMore(fetchCoreXml: string, pageNumber: number, pageCookie: 
     `;
 
 
-    return doRequest(moreMsgBody, "Execute", false, (moreResultXml: string) {
+    return doRequest(moreMsgBody, "Execute", false, (moreResultXml: string) => {
         let newFetchResult: Node = selectSingleNode(moreResultXml, "//a:Entities");
         let newMoreRecords: boolean = (selectSingleNodeText(moreResultXml, "//a:MoreRecords") === "true");
 

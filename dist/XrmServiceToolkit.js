@@ -964,22 +964,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	/// <reference path="../typings/main.d.ts" />
 	var Helper_1 = __webpack_require__(3);
 	var HelperSoap_1 = __webpack_require__(6);
-	// RetrieveMultiple: retrieveMultiple,
-	// QueryByAttribute: queryByAttribute,
-	// QueryAll: queryAll,
-	// SetState: setState,
-	// Assign: assign,
-	// RetrievePrincipalAccess: retrievePrincipalAccess,
-	// GrantAccess: grantAccess,
-	// ModifyAccess: modifyAccess,
-	// RevokeAccess: revokeAccess,
-	// GetCurrentUserId: getCurrentUserId,
-	// GetCurrentUserBusinessUnitId: getCurrentUserBusinessUnitId,
-	// GetCurrentUserRoles: getCurrentUserRoles,
-	// IsCurrentUserRole: isCurrentUserInRole,
-	// RetrieveAllEntitiesMetadata: retrieveAllEntitiesMetadata,
-	// RetrieveEntityMetadata: retrieveEntityMetadata,
-	// RetrieveAttributeMetadata: retrieveAttributeMetadata
 	var Soap = (function () {
 	    function Soap() {
 	    }
@@ -1179,7 +1163,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        else {
 	            query = "<a:AllColumns>true</a:AllColumns><a:Columns xmlns:b='http://schemas.microsoft.com/2003/10/Serialization/Arrays' />";
 	        }
-	        var msgBody = "\n            <request i:type=\"a:RetrieveRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">\n                <a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>Target</b:key>\n                        <b:value i:type=\"a:EntityReference\">\n                            <a:Id>" + Helper_1.encodeValue(id) + "</a:Id>\n                            <a:LogicalName>" + entityName + "</a:LogicalName>\n                            <a:Name i:nil=\"true\" />\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>ColumnSet</b:key>\n                        <b:value i:type=\"a:ColumnSet\">\n                            " + query + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>Retrieve</a:RequestName>\n            </request>\n        ";
+	        var msgBody = "\n            <request i:type=\"a:RetrieveRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">\n                <a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>Target</b:key>\n                        <b:value i:type=\"a:EntityReference\">\n                            <a:Id>" + HelperSoap_1.encodeValue(id) + "</a:Id>\n                            <a:LogicalName>" + entityName + "</a:LogicalName>\n                            <a:Name i:nil=\"true\" />\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>ColumnSet</b:key>\n                        <b:value i:type=\"a:ColumnSet\">\n                            " + query + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>Retrieve</a:RequestName>\n            </request>\n        ";
 	        var async = !!callback;
 	        return HelperSoap_1.doRequest(msgBody, "Execute", !!callback, function (resultXml) {
 	            var retrieveResult = HelperSoap_1.selectSingleNode(resultXml, "//b:value");
@@ -1224,1014 +1208,515 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	        // ReSharper restore NotAllPathsReturnValue
 	    };
+	    /**
+	     * Sends synchronous/asynchronous request to do a queryByAttribute request
+	     *
+	     * @static
+	     * @param {*} queryOptions A JavaScript Object with properties corresponding to the queryByAttribute Criteria
+	     * that are valid for queryByAttribute operations.
+	     * queryOptions.entityName is a string represents the name of the entity
+	     * queryOptions.attributes is a array represents the attributes of the entity to query
+	     * queryOptions.values is a array represents the values of the attributes to query
+	     * queryOptions.columnSet is a array represents the attributes of the entity to return
+	     * queryOptions.orderBy is a array represents the order conditions of the results
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     */
+	    Soap.QueryByAttribute = function (queryOptions, callback) {
+	        var entityName = queryOptions.entityName;
+	        var attributes = queryOptions.attributes;
+	        var values = queryOptions.values;
+	        var columnSet = queryOptions.columnSet;
+	        var orderBy = queryOptions.orderBy || "";
+	        attributes = HelperSoap_1.isArray(attributes) ? attributes : [attributes];
+	        values = HelperSoap_1.isArray(values) ? values : [values];
+	        orderBy = (!!orderBy && HelperSoap_1.isArray(orderBy)) ? orderBy : [orderBy];
+	        columnSet = (!!columnSet && HelperSoap_1.isArray(columnSet)) ? columnSet : [columnSet];
+	        var xml = "\n            <entity name=\"" + entityName + "\">\n                    " + HelperSoap_1.joinArray("<attribute name='", columnSet, "' />") + "\n                    " + HelperSoap_1.joinArray("<order attribute='", orderBy, "' />") + "\n                <filter>\n                    " + HelperSoap_1.joinConditionPair(attributes, values) + "\n                </filter>\n            </entity>\n        ";
+	        return this.Fetch(xml, false, callback);
+	    };
+	    ;
+	    /**
+	     * Sends synchronous/asynchronous request to do a queryAll request. This is to return all records (>5k+).
+	     * Consider Performance impact when using this method.
+	     *
+	     * @static
+	     * @param {*} queryOptions A JavaScript Object with properties corresponding to the queryByAttribute Criteria
+	     * that are valid for queryByAttribute operations.
+	     * queryOptions.entityName is a string represents the name of the entity
+	     * queryOptions.attributes is a array represents the attributes of the entity to query
+	     * queryOptions.values is a array represents the values of the attributes to query
+	     * queryOptions.columnSet is a array represents the attributes of the entity to return
+	     * queryOptions.orderBy is a array represents the order conditions of the results
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     */
+	    Soap.QueryAll = function (queryOptions, callback) {
+	        var entityName = queryOptions.entityName;
+	        var attributes = queryOptions.attributes;
+	        var values = queryOptions.values;
+	        var columnSet = queryOptions.columnSet;
+	        var orderBy = queryOptions.orderBy || '';
+	        attributes = HelperSoap_1.isArray(attributes) ? attributes : [attributes];
+	        values = HelperSoap_1.isArray(values) ? values : [values];
+	        orderBy = (!!orderBy && HelperSoap_1.isArray(orderBy)) ? orderBy : [orderBy];
+	        columnSet = (!!columnSet && HelperSoap_1.isArray(columnSet)) ? columnSet : [columnSet];
+	        var fetchCore = "\n            <entity name=\"" + entityName + "\">\n                    " + HelperSoap_1.joinArray("<attribute name='", columnSet, "' />") + "\n                    " + HelperSoap_1.joinArray("<order attribute='", orderBy, "' />") + "\n                <filter>\n                        " + HelperSoap_1.joinConditionPair(attributes, values) + "\n                </filter>\n            </entity>\n        ";
+	        return this.Fetch(fetchCore, true, callback);
+	    };
+	    /**
+	     * Sends synchronous/asynchronous request to setState of a record
+	     *
+	     * @static
+	     * @param {string} entityName A JavaScript String corresponding to the Schema name of
+	     * entity that is used for setState operations.
+	     * @param {string} id A JavaScript String corresponding to the GUID of
+	     * entity that is used for setState operations
+	     * @param {number} stateCode A JavaScript Integer corresponding to the value of
+	     * entity state that is used for setState operations
+	     * @param {number} statusCode A JavaScript Integer corresponding to the value of
+	     * entity status that is used for setState operations
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     */
+	    Soap.SetState = function (entityName, id, stateCode, statusCode, callback) {
+	        var request = "\n            <request i:type=\"b:SetStateRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\" xmlns:b=\"http://schemas.microsoft.com/crm/2011/Contracts\">\n                <a:Parameters xmlns:c=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                        <c:key>EntityMoniker</c:key>\n                        <c:value i:type=\"a:EntityReference\">\n                            <a:Id>" + HelperSoap_1.encodeValue(id) + "</a:Id>\n                            <a:LogicalName>" + entityName + "</a:LogicalName>\n                            <a:Name i:nil=\"true\" />\n                        </c:value>\n                        </a:KeyValuePairOfstringanyType>\n                        <a:KeyValuePairOfstringanyType>\n                            <c:key>State</c:key>\n                            <c:value i:type=\"a:OptionSetValue\">\n                             <a:Value>" + stateCode.toString() + "</a:Value>\n                            </c:value>\n                        </a:KeyValuePairOfstringanyType>\n                        <a:KeyValuePairOfstringanyType>\n                            <c:key>Status</c:key>\n                            <c:value i:type=\"a:OptionSetValue\">\n                             <a:Value>" + statusCode.toString() + "</a:Value>\n                            </c:value>\n                        </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>SetState</a:RequestName>\n            </request>\n       ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+	            var result = Helper_1.crmXmlDecode(responseText);
+	            if (!async) {
+	                return result;
+	            }
+	            else {
+	                callback(result);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends synchronous/asynchronous request to associate records
+	     *
+	     * @static
+	     * @param {string} relationshipName A JavaScript String corresponding to the relationship name
+	     * that is used for associate operations
+	     * @param {string} targetEntityName A JavaScript String corresponding to the relationship name
+	     * that is used for associate operations
+	     * @param {string} targetId A JavaScript String corresponding to the GUID of the target entity
+	     * that is used for associate operations
+	     * @param {string} relatedEntityName A JavaScript String corresponding to the schema name of the related entity
+	     * that is used for associate operations
+	     * @param {Array<businessEntity>} relatedBusinessEntities A JavaScript Array corresponding to the collection of the related entities as BusinessEntity
+	     * that is used for associate operations
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     * @returns {(void | any)} If sync -> results
+	     */
+	    Soap.Associate = function (relationshipName, targetEntityName, targetId, relatedEntityName, relatedBusinessEntities, callback) {
+	        var relatedEntities = relatedBusinessEntities;
+	        relatedEntities = HelperSoap_1.isArray(relatedEntities) ? relatedEntities : [relatedEntities];
+	        var output = [];
+	        for (var i = 0, ilength = relatedEntities.length; i < ilength; i++) {
+	            if (relatedEntities[i].id !== "") {
+	                output.push("<a:EntityReference>", "<a:Id>", relatedEntities[i].id, "</a:Id>", "<a:LogicalName>", relatedEntityName, "</a:LogicalName>", "<a:Name i:nil='true' />", "</a:EntityReference>");
+	            }
+	        }
+	        var relatedXml = output.join("");
+	        var request = "\n            <request i:type=\"a:AssociateRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">\n                <a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>Target</b:key>\n                        <b:value i:type=\"a:EntityReference\">\n                            <a:Id>" + HelperSoap_1.encodeValue(targetId) + "</a:Id>\n                            <a:LogicalName>" + targetEntityName + "</a:LogicalName>\n                            <a:Name i:nil=\"true\" />\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>Relationship</b:key>\n                        <b:value i:type=\"a:Relationship\">\n                            <a:PrimaryEntityRole>Referenced</a:PrimaryEntityRole>\n                            <a:SchemaName>" + relationshipName + "</a:SchemaName>\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                    <b:key>RelatedEntities</b:key>\n                    <b:value i:type=\"a:EntityReferenceCollection\">\n                        " + relatedXml + "\n                    </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>Associate</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+	            var result = Helper_1.crmXmlDecode(responseText);
+	            if (!async) {
+	                return result;
+	            }
+	            else {
+	                callback(result);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends synchronous/asynchronous request to disassociate records
+	     *
+	     * @static
+	     * @param {string} relationshipName A JavaScript String corresponding to the relationship name
+	     * that is used for associate operations
+	     * @param {string} targetEntityName A JavaScript String corresponding to the relationship name
+	     * that is used for associate operations
+	     * @param {string} targetId A JavaScript String corresponding to the GUID of the target entity
+	     * that is used for associate operations
+	     * @param {string} relatedEntityName A JavaScript String corresponding to the schema name of the related entity
+	     * that is used for associate operations
+	     * @param {Array<businessEntity>} relatedBusinessEntities A JavaScript Array corresponding to the collection of the related entities as BusinessEntity
+	     * that is used for associate operations
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     * @returns {(void | any)} If sync -> results
+	     */
+	    Soap.Disassociate = function (relationshipName, targetEntityName, targetId, relatedEntityName, relatedBusinessEntities, callback) {
+	        var relatedEntities = relatedBusinessEntities;
+	        relatedEntities = HelperSoap_1.isArray(relatedEntities) ? relatedEntities : [relatedEntities];
+	        var output = [];
+	        for (var i = 0, ilength = relatedEntities.length; i < ilength; i++) {
+	            if (relatedEntities[i].id !== "") {
+	                output.push("<a:EntityReference>", "<a:Id>", relatedEntities[i].id, "</a:Id>", "<a:LogicalName>", relatedEntityName, "</a:LogicalName>", "<a:Name i:nil='true' />", "</a:EntityReference>");
+	            }
+	        }
+	        var relatedXml = output.join("");
+	        var request = "\n            <request i:type=\"a:DisassociateRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">\n                <a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>Target</b:key>\n                        <b:value i:type=\"a:EntityReference\">\n                            <a:Id>" + HelperSoap_1.encodeValue(targetId) + "</a:Id>\n                            <a:LogicalName>" + targetEntityName + "</a:LogicalName>\n                            <a:Name i:nil=\"true\" />\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>Relationship</b:key>\n                        <b:value i:type=\"a:Relationship\">\n                            <a:PrimaryEntityRole i:nil=\"true\" />\n                            <a:SchemaName>" + relationshipName + "</a:SchemaName>\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                    <b:key>RelatedEntities</b:key>\n                    <b:value i:type=\"a:EntityReferenceCollection\">\n                        " + relatedXml + "\n                    </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>Disassociate</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+	            var result = Helper_1.crmXmlDecode(responseText);
+	            if (!async) {
+	                return result;
+	            }
+	            else {
+	                callback(result);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends synchronous request to retrieve the GUID of the current user
+	     *
+	     * @static
+	     * @returns {string} (description)
+	     */
+	    Soap.GetCurrentUserId = function () {
+	        var request = "\n            <request i:type=\"b:WhoAmIRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\" xmlns:b=\"http://schemas.microsoft.com/crm/2011/Contracts\">\n                <a:Parameters xmlns:c=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\" />\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>WhoAmI</a:RequestName>\n            </request>\n        ";
+	        var xmlDoc = HelperSoap_1.doRequest(request, "Execute");
+	        return HelperSoap_1.getNodeText(HelperSoap_1.selectNodes(xmlDoc, "//b:value")[0]);
+	    };
+	    /**
+	     * Sends synchronous request to retrieve the GUID of the current user's business unit
+	     *
+	     * @static
+	     * @returns {string}
+	     */
+	    Soap.GetCurrentUserBusinessUnitId = function () {
+	        var request = "\n            <request i:type=\"b:WhoAmIRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\" xmlns:b=\"http://schemas.microsoft.com/crm/2011/Contracts\">\n                <a:Parameters xmlns:c=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\" />\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>WhoAmI</a:RequestName>\n            </request>\n        ";
+	        var xmlDoc = HelperSoap_1.doRequest(request, "Execute");
+	        return HelperSoap_1.getNodeText(HelperSoap_1.selectNodes(xmlDoc, "//b:value")[1]);
+	    };
+	    /**
+	     * Sends synchronous request to retrieve the list of the current user's roles
+	     *
+	     * @static
+	     * @returns {Array<string>} All roles of the current user
+	     */
+	    Soap.GetCurrentUserRoles = function () {
+	        var xml = "\n            <fetch version=\"1.0\" output-format=\"xml-platform\" mapping=\"logical\" distinct=\"true\">\n                <entity name=\"role\">\n                <attribute name=\"name\" />\n                <attribute name=\"businessunitid\" />\n                <attribute name=\"roleid\" />\n                <order attribute=\"name\" descending=\"false\" /> +\n                <link-entity name=\"systemuserroles\" from=\"roleid\" to=\"roleid\" visible=\"false\" intersect=\"true\">\n                    <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"systemuserid\" alias=\"aa\">\n                    <filter type=\"and\">\n                        <condition attribute=\"systemuserid\" operator=\"eq-userid\" />\n                    </filter>\n                    </link-entity>\n                </link-entity>\n                </entity>\n            </fetch>\n        ";
+	        var fetchResult = this.Fetch(xml);
+	        var roles = [];
+	        if (fetchResult !== null && typeof fetchResult != "undefined") {
+	            for (var i = 0, ilength = fetchResult.length; i < ilength; i++) {
+	                roles[i] = fetchResult[i].attributes["name"].value;
+	            }
+	        }
+	        return roles;
+	    };
+	    /**
+	     * Sends synchronous request to check if the current user has certain roles
+	     * Passes name of role as arguments. For example, IsCurrentUserInRole('System Administrator')
+	     * Returns true or false
+	     *
+	     * @static
+	     * @returns {boolean}
+	     */
+	    Soap.IsCurrentUserInRole = function () {
+	        var roles = this.GetCurrentUserRoles();
+	        for (var i = 0, ilength = roles.length; i < ilength; i++) {
+	            for (var j = 0, jlength = arguments.length; j < jlength; j++) {
+	                if (roles[i] === arguments[j]) {
+	                    return true;
+	                }
+	            }
+	        }
+	        return false;
+	    };
+	    /**
+	     * Sends synchronous/asynchronous request to assign an existing record to a user / a team
+	     *
+	     * @static
+	     * @param {string} targetEntityName A JavaScript String corresponding to the schema name of the target entity
+	     * that is used for assign operations
+	     * @param {string} targetId A JavaScript String corresponding to the GUID of the target entity
+	     * that is used for assign operations
+	     * @param {string} assigneeEntityName A JavaScript String corresponding to the schema name of the assignee entity
+	     * that is used for assign operations
+	     * @param {string} assigneeId A JavaScript String corresponding to the GUID of the assignee entity
+	     * that is used for assign operations
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     */
+	    Soap.Assign = function (targetEntityName, targetId, assigneeEntityName, assigneeId, callback) {
+	        var request = "\n            <request i:type=\"b:AssignRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\" xmlns:b=\"http://schemas.microsoft.com/crm/2011/Contracts\">\n                <a:Parameters xmlns:c=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>Target</c:key>\n                    <c:value i:type=\"a:EntityReference\">\n                        <a:Id>" + HelperSoap_1.encodeValue(targetId) + "</a:Id>\n                        <a:LogicalName>" + targetEntityName + "</a:LogicalName>\n                        <a:Name i:nil=\"true\" />\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>Assignee</c:key>\n                    <c:value i:type=\"a:EntityReference\">\n                        <a:Id>" + HelperSoap_1.encodeValue(assigneeId) + "</a:Id>\n                        <a:LogicalName>" + assigneeEntityName + "</a:LogicalName>\n                        <a:Name i:nil=\"true\" />\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>Assign</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+	            var result = Helper_1.crmXmlDecode(responseText);
+	            if (!async) {
+	                return result;
+	            }
+	            else {
+	                callback(result);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends synchronous/asynchronous request to do a grantAccess request.
+	     * Levels of Access Options are: AppendAccess, AppendToAccess, AssignAccess, CreateAccess, DeleteAccess, None, ReadAccess, ShareAccess, and * WriteAccess
+	     *
+	     * @static
+	     * @param {*} accessOptions A JavaScript Object with properties corresponding to the grantAccess Criteria
+	     * that are valid for grantAccess operations.
+	     * accessOptions.targetEntityName is a string represents the name of the target entity
+	     * accessOptions.targetEntityId is a string represents the GUID of the target entity
+	     * accessOptions.principalEntityName is a string represents the name of the principal entity
+	     * accessOptions.principalEntityId is a string represents the GUID of the principal entity
+	     * accessOptions.accessRights is a array represents the access conditions of the results
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     */
+	    Soap.GrantAccess = function (accessOptions, callback) {
+	        var targetEntityName = accessOptions.targetEntityName;
+	        var targetEntityId = accessOptions.targetEntityId;
+	        var principalEntityName = accessOptions.principalEntityName;
+	        var principalEntityId = accessOptions.principalEntityId;
+	        var accessRights = accessOptions.accessRights;
+	        accessRights = HelperSoap_1.isArray(accessRights) ? accessRights : [accessRights];
+	        var accessRightString = "";
+	        for (var i = 0, ilength = accessRights.length; i < ilength; i++) {
+	            accessRightString += HelperSoap_1.encodeValue(accessRights[i]) + " ";
+	        }
+	        var request = "\n            <request i:type=\"b:GrantAccessRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\" xmlns:b=\"http://schemas.microsoft.com/crm/2011/Contracts\">\n                <a:Parameters xmlns:c=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>Target</c:key>\n                    <c:value i:type=\"a:EntityReference\">\n                        <a:Id>" + HelperSoap_1.encodeValue(targetEntityId) + "</a:Id>\n                        <a:LogicalName>" + targetEntityName + "</a:LogicalName>\n                        <a:Name i:nil=\"true\" />\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>PrincipalAccess</c:key>\n                    <c:value i:type=\"b:PrincipalAccess\">\n                        <b:AccessMask>" + accessRightString + "</b:AccessMask>\n                        <b:Principal>\n                        <a:Id>" + HelperSoap_1.encodeValue(principalEntityId) + "</a:Id>\n                        <a:LogicalName>" + principalEntityName + "</a:LogicalName>\n                        <a:Name i:nil=\"true\" />\n                        </b:Principal>\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>GrantAccess</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+	            var result = Helper_1.crmXmlDecode(responseText);
+	            if (!async) {
+	                return result;
+	            }
+	            else {
+	                callback(result);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends synchronous/asynchronous request to do a modifyAccess request.
+	     * Levels of Access Options are: AppendAccess, AppendToAccess, AssignAccess, CreateAccess, DeleteAccess, None, ReadAccess, ShareAccess, and * WriteAccess
+	     *
+	     * @static
+	     * @param {*} accessOptions A JavaScript Object with properties corresponding to the modifyAccess Criteria
+	     * that are valid for modifyAccess operations.
+	     * accessOptions.targetEntityName is a string represents the name of the target entity
+	     * accessOptions.targetEntityId is a string represents the GUID of the target entity
+	     * accessOptions.principalEntityName is a string represents the name of the principal entity
+	     * accessOptions.principalEntityId is a string represents the GUID of the principal entity
+	     * accessOptions.accessRights is a array represents the access conditions of the results
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     */
+	    Soap.ModifyAccess = function (accessOptions, callback) {
+	        var targetEntityName = accessOptions.targetEntityName;
+	        var targetEntityId = accessOptions.targetEntityId;
+	        var principalEntityName = accessOptions.principalEntityName;
+	        var principalEntityId = accessOptions.principalEntityId;
+	        var accessRights = accessOptions.accessRights;
+	        accessRights = HelperSoap_1.isArray(accessRights) ? accessRights : [accessRights];
+	        var accessRightString = "";
+	        for (var i = 0, ilength = accessRights.length; i < ilength; i++) {
+	            accessRightString += HelperSoap_1.encodeValue(accessRights[i]) + " ";
+	        }
+	        var request = "\n            <request i:type=\"b:ModifyAccessRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\" xmlns:b=\"http://schemas.microsoft.com/crm/2011/Contracts\">\n                <a:Parameters xmlns:c=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>Target</c:key>\n                    <c:value i:type=\"a:EntityReference\">\n                        <a:Id>" + HelperSoap_1.encodeValue(targetEntityId) + "</a:Id>\n                        <a:LogicalName>" + targetEntityName + "</a:LogicalName>\n                        <a:Name i:nil=\"true\" />\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>PrincipalAccess</c:key>\n                    <c:value i:type=\"b:PrincipalAccess\">\n                        <b:AccessMask>" + accessRightString + "</b:AccessMask>\n                        <b:Principal>\n                        <a:Id>" + HelperSoap_1.encodeValue(principalEntityId) + "</a:Id>\n                        <a:LogicalName>" + principalEntityName + "</a:LogicalName>\n                        <a:Name i:nil=\"true\" />\n                        </b:Principal>\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>ModifyAccess</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+	            var result = Helper_1.crmXmlDecode(responseText);
+	            if (!async) {
+	                return result;
+	            }
+	            else {
+	                callback(result);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends synchronous/asynchronous request to do a revokeAccess request
+	     *
+	     * @static
+	     * @param {*} accessOptions A JavaScript Object with properties corresponding to the revokeAccess Criteria
+	     * that are valid for revokeAccess operations.
+	     * accessOptions.targetEntityName is a string represents the name of the target entity
+	     * accessOptions.targetEntityId is a string represents the GUID of the target entity
+	     * accessOptions.revokeeEntityName is a string represents the name of the revokee entity
+	     * accessOptions.revokeeEntityId is a string represents the GUID of the revokee entity
+	     * @param {Function} callback Function used for asynchronous request. If not defined, it sends a synchronous request
+	     */
+	    Soap.RevokeAccess = function (accessOptions, callback) {
+	        var targetEntityName = accessOptions.targetEntityName;
+	        var targetEntityId = accessOptions.targetEntityId;
+	        var revokeeEntityName = accessOptions.revokeeEntityName;
+	        var revokeeEntityId = accessOptions.revokeeEntityId;
+	        var request = "\n            <request i:type=\"b:RevokeAccessRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\" xmlns:b=\"http://schemas.microsoft.com/crm/2011/Contracts\">\n                <a:Parameters xmlns:c=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>Target</c:key>\n                    <c:value i:type=\"a:EntityReference\">\n                        <a:Id>" + HelperSoap_1.encodeValue(targetEntityId) + "</a:Id>\n                        <a:LogicalName>" + targetEntityName + "</a:LogicalName>\n                        <a:Name i:nil=\"true\" />\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>Revokee</c:key>\n                    <c:value i:type=\"a:EntityReference\">\n                        <a:Id>" + HelperSoap_1.encodeValue(revokeeEntityId) + "</a:Id>\n                        <a:LogicalName>" + revokeeEntityName + "</a:LogicalName>\n                        <a:Name i:nil=\"true\" />\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>RevokeAccess</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
+	            var result = Helper_1.crmXmlDecode(responseText);
+	            if (!async) {
+	                return result;
+	            }
+	            else {
+	                callback(result);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends synchronous/asynchronous request to do a retrievePrincipalAccess request
+	     *
+	     * @static
+	     * @param {*} accessOptions A JavaScript Object with properties corresponding to the retrievePrincipalAccess Criteria
+	     * that are valid for retrievePrincipalAccess operations.
+	     * accessOptions.targetEntityName is a string represents the name of the target entity
+	     * accessOptions.targetEntityId is a string represents the GUID of the target entity
+	     * accessOptions.principalEntityName is a string represents the name of the principal entity
+	     * accessOptions.principalEntityId is a string represents the GUID of the principal entity
+	     * @param {Function} callback A Function used for asynchronous request. If not defined, it sends a synchronous request
+	     */
+	    Soap.RetrievePrincipalAccess = function (accessOptions, callback) {
+	        var targetEntityName = accessOptions.targetEntityName;
+	        var targetEntityId = accessOptions.targetEntityId;
+	        var principalEntityName = accessOptions.principalEntityName;
+	        var principalEntityId = accessOptions.principalEntityId;
+	        var request = "\n            <request i:type='b:RetrievePrincipalAccessRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>\n                <a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>Target</c:key>\n                    <c:value i:type='a:EntityReference'>\n                        <a:Id>" + HelperSoap_1.encodeValue(targetEntityId) + "</a:Id>\n                        <a:LogicalName>" + targetEntityName + "</a:LogicalName>\n                        <a:Name i:nil='true' />\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                    <c:key>Principal</c:key>\n                    <c:value i:type='a:EntityReference'>\n                        <a:Id>" + HelperSoap_1.encodeValue(principalEntityId) + "</a:Id>\n                        <a:LogicalName>" + principalEntityName + "</a:LogicalName>\n                        <a:Name i:nil='true' />\n                    </c:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil='true' />\n                <a:RequestName>RetrievePrincipalAccess</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var result = HelperSoap_1.selectSingleNodeText(resultXml, "//b:value");
+	            if (!async) {
+	                return result;
+	            }
+	            else {
+	                callback(result);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends an synchronous/asynchronous RetrieveAllEntitieMetadata Request to retrieve all entities metadata in the system
+	     *
+	     * @static
+	     * @param {Array<string>} entityFilters The filter array available to filter which data is retrieved. Case Sensitive filters [Entity,Attributes,Privileges,Relationships]
+	     * Include only those elements of the entity you want to retrieve in the array. Retrieving all parts of all entities may take significant time.
+	     * @param {boolean} retrieveIfPublished Sets whether to retrieve the metadata that has not been published
+	     * @param {Function} callback The function that will be passed through and be called by a successful response.
+	     * This function also used as an indicator if the function is synchronous/asynchronous
+	     * @returns {(void | any)} Entity Metadata Collection
+	     */
+	    Soap.RetrieveAllEntitiesMetadata = function (entityFilters, retrieveIfPublished, callback) {
+	        entityFilters = HelperSoap_1.isArray(entityFilters) ? entityFilters : [entityFilters];
+	        var entityFiltersString = "";
+	        for (var iii = 0, templength = entityFilters.length; iii < templength; iii++) {
+	            entityFiltersString += HelperSoap_1.encodeValue(entityFilters[iii]) + " ";
+	        }
+	        var request = "\n            <request i:type=\"a:RetrieveAllEntitiesRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">\n                <a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>EntityFilters</b:key>\n                        <b:value i:type=\"c:EntityFilters\" xmlns:c=\"http://schemas.microsoft.com/xrm/2011/Metadata\">\n                        " + HelperSoap_1.encodeValue(entityFiltersString) + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>RetrieveAsIfPublished</b:key>\n                        <b:value i:type=\"c:boolean\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">\n                        " + HelperSoap_1.encodeValue(retrieveIfPublished.toString()) + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>RetrieveAllEntities</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var response = HelperSoap_1.selectNodes(resultXml, "//c:EntityMetadata");
+	            var results = [];
+	            for (var i = 0, ilength = response.length; i < ilength; i++) {
+	                var a = HelperSoap_1.objectifyNode(response[i]);
+	                a._type = "EntityMetadata";
+	                results.push(a);
+	            }
+	            if (!async) {
+	                return results;
+	            }
+	            else {
+	                callback(results);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends an synchronous/asynchronous RetreiveEntityMetadata Request to retrieve a particular entity metadata in the system
+	     *
+	     * @static
+	     * @param {string} entityFilters The filter string available to filter which data is retrieved. Case Sensitive filters [Entity,Attributes,Privileges,Relationships]
+	     * Include only those elements of the entity you want to retrieve in the array. Retrieving all parts of all entities may take significant time
+	     * @param {string} logicalName The string of the entity logical name
+	     * @param {boolean} retrieveIfPublished Sets whether to retrieve the metadata that has not been published
+	     * @param {Function} callback The function that will be passed through and be called by a successful response.
+	     * This function also used as an indicator if the function is synchronous/asynchronous
+	     * @returns {(void | any)} Entity Metadata
+	     */
+	    Soap.RetrieveEntityMetadata = function (entityFilters, logicalName, retrieveIfPublished, callback) {
+	        entityFilters = HelperSoap_1.isArray(entityFilters) ? entityFilters : [entityFilters];
+	        var entityFiltersString = "";
+	        for (var iii = 0, templength = entityFilters.length; iii < templength; iii++) {
+	            entityFiltersString += HelperSoap_1.encodeValue(entityFilters[iii]) + " ";
+	        }
+	        var request = "\n            <request i:type=\"a:RetrieveEntityRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">\n                <a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>EntityFilters</b:key>\n                        <b:value i:type=\"c:EntityFilters\" xmlns:c=\"http://schemas.microsoft.com/xrm/2011/Metadata\">\n                        " + HelperSoap_1.encodeValue(entityFiltersString) + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>MetadataId</b:key>\n                        <b:value i:type=\"c:guid\"  xmlns:c=\"http://schemas.microsoft.com/2003/10/Serialization/\">\n                        " + HelperSoap_1.encodeValue("00000000-0000-0000-0000-000000000000") + "\n                        </b:value>\"\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>RetrieveAsIfPublished</b:key>\n                        <b:value i:type=\"c:boolean\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">\n                        " + HelperSoap_1.encodeValue(retrieveIfPublished.toString()) + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>LogicalName</b:key>\n                        <b:value i:type=\"c:string\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">\n                        " + HelperSoap_1.encodeValue(logicalName) + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>RetrieveEntity</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var response = HelperSoap_1.selectNodes(resultXml, "//b:value");
+	            var results = [];
+	            for (var i = 0, ilength = response.length; i < ilength; i++) {
+	                var a = HelperSoap_1.objectifyNode(response[i]);
+	                a._type = "EntityMetadata";
+	                results.push(a);
+	            }
+	            if (!async) {
+	                return results;
+	            }
+	            else {
+	                callback(results);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
+	    /**
+	     * Sends an synchronous/asynchronous RetrieveAttributeMetadata Request to retrieve a particular entity's attribute metadata in the system
+	     *
+	     * @static
+	     * @param {string} entityLogicalName The string of the entity logical name
+	     * @param {string} attributeLogicalName The string of the entity's attribute logical name
+	     * @param {boolean} retrieveIfPublished Sets whether to retrieve the metadata that has not been published
+	     * @param {Function} callback The function that will be passed through and be called by a successful response.
+	     * This function also used as an indicator if the function is synchronous/asynchronous
+	     * @returns {(void | any)} Entity Metadata
+	     */
+	    Soap.RetrieveAttributeMetadata = function (entityLogicalName, attributeLogicalName, retrieveIfPublished, callback) {
+	        var request = "\n            <request i:type=\"a:RetrieveAttributeRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">\n                <a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>EntityLogicalName</b:key>\n                        <b:value i:type=\"c:string\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">\n                        " + HelperSoap_1.encodeValue(entityLogicalName) + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>MetadataId</b:key>\n                        <b:value i:type=\"ser:guid\"  xmlns:ser=\"http://schemas.microsoft.com/2003/10/Serialization/\">\n                        " + HelperSoap_1.encodeValue("00000000-0000-0000-0000-000000000000") + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>RetrieveAsIfPublished</b:key>\n                        <b:value i:type=\"c:boolean\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">\n                        " + HelperSoap_1.encodeValue(retrieveIfPublished.toString()) + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                    <a:KeyValuePairOfstringanyType>\n                        <b:key>LogicalName</b:key>\n                        <b:value i:type=\"c:string\"   xmlns:c=\"http://www.w3.org/2001/XMLSchema\">\n                        " + HelperSoap_1.encodeValue(attributeLogicalName) + "\n                        </b:value>\n                    </a:KeyValuePairOfstringanyType>\n                </a:Parameters>\n                <a:RequestId i:nil=\"true\" />\n                <a:RequestName>RetrieveAttribute</a:RequestName>\n            </request>\n        ";
+	        var async = !!callback;
+	        return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
+	            var response = HelperSoap_1.selectNodes(resultXml, "//b:value");
+	            var results = [];
+	            for (var i = 0, ilength = response.length; i < ilength; i++) {
+	                var a = HelperSoap_1.objectifyNode(response[i]);
+	                results.push(a);
+	            }
+	            if (!async) {
+	                return results;
+	            }
+	            else {
+	                callback(results);
+	            }
+	            // ReSharper disable NotAllPathsReturnValue
+	        });
+	        // ReSharper restore NotAllPathsReturnValue
+	    };
 	    return Soap;
 	}());
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Soap;
-	var joinArray = function (prefix, array, suffix) {
-	    var output = [];
-	    for (var i = 0, ilength = array.length; i < ilength; i++) {
-	        if (array[i] !== "" && array[i] != undefined) {
-	            output.push(prefix, array[i], suffix);
-	        }
-	    }
-	    return output.join("");
-	};
-	var joinConditionPair = function (attributes, values) {
-	    var output = [];
-	    for (var i = 0, ilength = attributes.length; i < ilength; i++) {
-	        if (attributes[i] !== "") {
-	            var value1 = values[i];
-	            if (typeof value1 == typeof []) {
-	                output.push("<condition attribute='", attributes[i], "' operator='in' >");
-	                for (var valueIndex in value1) {
-	                    if (value1.hasOwnProperty(valueIndex)) {
-	                        var value = Helper_1.encodeValue(value1[valueIndex]);
-	                        output.push("<value>" + value + "</value>");
-	                    }
-	                }
-	                output.push("</condition>");
-	            }
-	            else if (typeof value1 == typeof "") {
-	                output.push("<condition attribute='", attributes[i], "' operator='eq' value='", Helper_1.encodeValue(value1), "' />");
-	            }
-	        }
-	    }
-	    return output.join("");
-	};
-	var queryByAttribute = function (queryOptions, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to do a queryByAttribute request.
-	    ///</summary>
-	    ///<param name="queryOptions" type="Object">
-	    /// A JavaScript Object with properties corresponding to the queryByAttribute Criteria
-	    /// that are valid for queryByAttribute operations.
-	    /// queryOptions.entityName is a string represents the name of the entity
-	    /// queryOptions.attributes is a array represents the attributes of the entity to query
-	    /// queryOptions.values is a array represents the values of the attributes to query
-	    /// queryOptions.columnSet is a array represents the attributes of the entity to return
-	    /// queryOptions.orderBy is a array represents the order conditions of the results
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var entityName = queryOptions.entityName;
-	    var attributes = queryOptions.attributes;
-	    var values = queryOptions.values;
-	    var columnSet = queryOptions.columnSet;
-	    var orderBy = queryOptions.orderBy || '';
-	    attributes = isArray(attributes) ? attributes : [attributes];
-	    values = isArray(values) ? values : [values];
-	    orderBy = (!!orderBy && isArray(orderBy)) ? orderBy : [orderBy];
-	    columnSet = (!!columnSet && isArray(columnSet)) ? columnSet : [columnSet];
-	    var xml = [
-	        "<entity name='", entityName, "'>",
-	        joinArray("<attribute name='", columnSet, "' />"),
-	        joinArray("<order attribute='", orderBy, "' />"),
-	        "<filter>",
-	        joinConditionPair(attributes, values),
-	        "</filter>",
-	        "</entity>"
-	    ].join("");
-	    return fetch(xml, false, callback);
-	};
-	var queryAll = function (queryOptions, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to do a queryAll request. This is to return all records (>5k+).
-	    /// Consider Performance impact when using this method.
-	    ///</summary>
-	    ///<param name="queryOptions" type="Object">
-	    /// A JavaScript Object with properties corresponding to the queryByAttribute Criteria
-	    /// that are valid for queryByAttribute operations.
-	    /// queryOptions.entityName is a string represents the name of the entity
-	    /// queryOptions.attributes is a array represents the attributes of the entity to query
-	    /// queryOptions.values is a array represents the values of the attributes to query
-	    /// queryOptions.columnSet is a array represents the attributes of the entity to return
-	    /// queryOptions.orderBy is a array represents the order conditions of the results
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var entityName = queryOptions.entityName;
-	    var attributes = queryOptions.attributes;
-	    var values = queryOptions.values;
-	    var columnSet = queryOptions.columnSet;
-	    var orderBy = queryOptions.orderBy || '';
-	    attributes = isArray(attributes) ? attributes : [attributes];
-	    values = isArray(values) ? values : [values];
-	    orderBy = (!!orderBy && isArray(orderBy)) ? orderBy : [orderBy];
-	    columnSet = (!!columnSet && isArray(columnSet)) ? columnSet : [columnSet];
-	    var fetchCore = [
-	        "<entity name='", entityName, "'>",
-	        joinArray("<attribute name='", columnSet, "' />"),
-	        joinArray("<order attribute='", orderBy, "' />"),
-	        "<filter>",
-	        joinConditionPair(attributes, values),
-	        "</filter>",
-	        "</entity>"
-	    ].join("");
-	    var async = !!callback;
-	    return fetch(fetchCore, true, async);
-	};
-	var setState = function (entityName, id, stateCode, statusCode, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to setState of a record.
-	    ///</summary>
-	    ///<param name="entityName" type="String">
-	    /// A JavaScript String corresponding to the Schema name of
-	    /// entity that is used for setState operations.
-	    /// </param>
-	    ///<param name="id" type="String">
-	    /// A JavaScript String corresponding to the GUID of
-	    /// entity that is used for setState operations.
-	    /// </param>
-	    ///<param name="stateCode" type="Int">
-	    /// A JavaScript Integer corresponding to the value of
-	    /// entity state that is used for setState operations.
-	    /// </param>
-	    ///<param name="statusCode" type="Int">
-	    /// A JavaScript Integer corresponding to the value of
-	    /// entity status that is used for setState operations.
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var request = [
-	        "<request i:type='b:SetStateRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-	        "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>EntityMoniker</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(id), "</a:Id>",
-	        "<a:LogicalName>", entityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>State</c:key>",
-	        "<c:value i:type='a:OptionSetValue'>",
-	        "<a:Value>", stateCode.toString(), "</a:Value>",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Status</c:key>",
-	        "<c:value i:type='a:OptionSetValue'>",
-	        "<a:Value>", statusCode.toString(), "</a:Value>",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>SetState</a:RequestName>",
-	        "</request>"
-	    ].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-	        var result = Helper_1.crmXmlDecode(responseText);
-	        if (!async)
-	            return result;
-	        else
-	            callback(result);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var associate = function (relationshipName, targetEntityName, targetId, relatedEntityName, relatedBusinessEntities, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to associate records.
-	    ///</summary>
-	    ///<param name="relationshipName" type="String">
-	    /// A JavaScript String corresponding to the relationship name
-	    /// that is used for associate operations.
-	    /// </param>
-	    ///<param name="targetEntityName" type="String">
-	    /// A JavaScript String corresponding to the schema name of the target entity
-	    /// that is used for associate operations.
-	    /// </param>
-	    ///<param name="targetId" type="String">
-	    /// A JavaScript String corresponding to the GUID of the target entity
-	    /// that is used for associate operations.
-	    /// </param>
-	    ///<param name="relatedEntityName" type="String">
-	    /// A JavaScript String corresponding to the schema name of the related entity
-	    /// that is used for associate operations.
-	    /// </param>
-	    ///<param name="relationshipBusinessEntities" type="Array">
-	    /// A JavaScript Array corresponding to the collection of the related entities as BusinessEntity
-	    /// that is used for associate operations.
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var relatedEntities = relatedBusinessEntities;
-	    relatedEntities = isArray(relatedEntities) ? relatedEntities : [relatedEntities];
-	    var output = [];
-	    for (var i = 0, ilength = relatedEntities.length; i < ilength; i++) {
-	        if (relatedEntities[i].id !== "") {
-	            output.push("<a:EntityReference>", "<a:Id>", relatedEntities[i].id, "</a:Id>", "<a:LogicalName>", relatedEntityName, "</a:LogicalName>", "<a:Name i:nil='true' />", "</a:EntityReference>");
-	        }
-	    }
-	    var relatedXml = output.join("");
-	    var request = [
-	        "<request i:type='a:AssociateRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts'>",
-	        "<a:Parameters xmlns:b='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>Target</b:key>",
-	        "<b:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(targetId), "</a:Id>",
-	        "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>Relationship</b:key>",
-	        "<b:value i:type='a:Relationship'>",
-	        "<a:PrimaryEntityRole>Referenced</a:PrimaryEntityRole>",
-	        "<a:SchemaName>", relationshipName, "</a:SchemaName>",
-	        "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>RelatedEntities</b:key>",
-	        "<b:value i:type='a:EntityReferenceCollection'>",
-	        relatedXml,
-	        "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>Associate</a:RequestName>",
-	        "</request>"
-	    ].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-	        var result = Helper_1.crmXmlDecode(responseText);
-	        if (!async)
-	            return result;
-	        else
-	            callback(result);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var disassociate = function (relationshipName, targetEntityName, targetId, relatedEntityName, relatedBusinessEntities, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to disassociate records.
-	    ///</summary>
-	    ///<param name="relationshipName" type="String">
-	    /// A JavaScript String corresponding to the relationship name
-	    /// that is used for disassociate operations.
-	    /// </param>
-	    ///<param name="targetEntityName" type="String">
-	    /// A JavaScript String corresponding to the schema name of the target entity
-	    /// that is used for disassociate operations.
-	    /// </param>
-	    ///<param name="targetId" type="String">
-	    /// A JavaScript String corresponding to the GUID of the target entity
-	    /// that is used for disassociate operations.
-	    /// </param>
-	    ///<param name="relatedEntityName" type="String">
-	    /// A JavaScript String corresponding to the schema name of the related entity
-	    /// that is used for disassociate operations.
-	    /// </param>
-	    ///<param name="relationshipBusinessEntities" type="Array">
-	    /// A JavaScript Array corresponding to the collection of the related entities as BusinessEntity
-	    /// that is used for disassociate operations.
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var relatedEntities = relatedBusinessEntities;
-	    relatedEntities = isArray(relatedEntities) ? relatedEntities : [relatedEntities];
-	    var output = [];
-	    for (var i = 0, ilength = relatedEntities.length; i < ilength; i++) {
-	        if (relatedEntities[i].id !== "") {
-	            output.push("<a:EntityReference>", "<a:Id>", relatedEntities[i].id, "</a:Id>", "<a:LogicalName>", relatedEntityName, "</a:LogicalName>", "<a:Name i:nil='true' />", "</a:EntityReference>");
-	        }
-	    }
-	    var relatedXml = output.join("");
-	    var request = [
-	        "<request i:type='a:DisassociateRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts'>",
-	        "<a:Parameters xmlns:b='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>Target</b:key>",
-	        "<b:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(targetId), "</a:Id>",
-	        "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>Relationship</b:key>",
-	        "<b:value i:type='a:Relationship'>",
-	        "<a:PrimaryEntityRole i:nil='true' />",
-	        "<a:SchemaName>", relationshipName, "</a:SchemaName>",
-	        "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>RelatedEntities</b:key>",
-	        "<b:value i:type='a:EntityReferenceCollection'>",
-	        relatedXml,
-	        "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>Disassociate</a:RequestName>",
-	        "</request>"
-	    ].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-	        var result = Helper_1.crmXmlDecode(responseText);
-	        if (!async)
-	            return result;
-	        else
-	            callback(result);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var getCurrentUserId = function () {
-	    ///<summary>
-	    /// Sends synchronous request to retrieve the GUID of the current user.
-	    ///</summary>
-	    var request = [
-	        "<request i:type='b:WhoAmIRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-	        "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic' />",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>WhoAmI</a:RequestName>",
-	        "</request>"
-	    ].join("");
-	    var xmlDoc = HelperSoap_1.doRequest(request, "Execute");
-	    return getNodeText(selectNodes(xmlDoc, "//b:value")[0]);
-	};
-	var getCurrentUserBusinessUnitId = function () {
-	    ///<summary>
-	    /// Sends synchronous request to retrieve the GUID of the current user's business unit.
-	    ///</summary>
-	    var request = ["<request i:type='b:WhoAmIRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-	        "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic' />",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>WhoAmI</a:RequestName>",
-	        "</request>"].join("");
-	    var xmlDoc = HelperSoap_1.doRequest(request, "Execute");
-	    return getNodeText(selectNodes(xmlDoc, "//b:value")[1]);
-	};
-	var getCurrentUserRoles = function () {
-	    ///<summary>
-	    /// Sends synchronous request to retrieve the list of the current user's roles.
-	    ///</summary>
-	    var xml = [
-	        "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='true'>",
-	        "<entity name='role'>",
-	        "<attribute name='name' />",
-	        "<attribute name='businessunitid' />",
-	        "<attribute name='roleid' />",
-	        "<order attribute='name' descending='false' />" +
-	            "<link-entity name='systemuserroles' from='roleid' to='roleid' visible='false' intersect='true'>",
-	        "<link-entity name='systemuser' from='systemuserid' to='systemuserid' alias='aa'>",
-	        "<filter type='and'>",
-	        "<condition attribute='systemuserid' operator='eq-userid' />",
-	        "</filter>",
-	        "</link-entity>",
-	        "</link-entity>",
-	        "</entity>",
-	        "</fetch>"
-	    ].join("");
-	    var fetchResult = fetch(xml);
-	    var roles = [];
-	    if (fetchResult !== null && typeof fetchResult != 'undefined') {
-	        for (var i = 0, ilength = fetchResult.length; i < ilength; i++) {
-	            roles[i] = fetchResult[i].attributes["name"].value;
-	        }
-	    }
-	    return roles;
-	};
-	var isCurrentUserInRole = function () {
-	    ///<summary>
-	    /// Sends synchronous request to check if the current user has certain roles
-	    /// Passes name of role as arguments. For example, IsCurrentUserInRole('System Administrator')
-	    /// Returns true or false.
-	    ///</summary>
-	    var roles = getCurrentUserRoles();
-	    for (var i = 0, ilength = roles.length; i < ilength; i++) {
-	        for (var j = 0, jlength = arguments.length; j < jlength; j++) {
-	            if (roles[i] === arguments[j]) {
-	                return true;
-	            }
-	        }
-	    }
-	    return false;
-	};
-	var assign = function (targetEntityName, targetId, assigneeEntityName, assigneeId, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to assign an existing record to a user / a team.
-	    ///</summary>
-	    ///<param name="targetEntityName" type="String">
-	    /// A JavaScript String corresponding to the schema name of the target entity
-	    /// that is used for assign operations.
-	    /// </param>
-	    ///<param name="targetId" type="String">
-	    /// A JavaScript String corresponding to the GUID of the target entity
-	    /// that is used for assign operations.
-	    /// </param>
-	    ///<param name="assigneeEntityName" type="String">
-	    /// A JavaScript String corresponding to the schema name of the assignee entity
-	    /// that is used for assign operations.
-	    /// </param>
-	    ///<param name="assigneeId" type="String">
-	    /// A JavaScript String corresponding to the GUID of the assignee entity
-	    /// that is used for assign operations.
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var request = ["<request i:type='b:AssignRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-	        "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Target</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(targetId), "</a:Id>",
-	        "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Assignee</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(assigneeId), "</a:Id>",
-	        "<a:LogicalName>", assigneeEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>Assign</a:RequestName>",
-	        "</request>"].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-	        var result = Helper_1.crmXmlDecode(responseText);
-	        if (!async)
-	            return result;
-	        else
-	            callback(result);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var grantAccess = function (accessOptions, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to do a grantAccess request.
-	    /// Levels of Access Options are: AppendAccess, AppendToAccess, AssignAccess, CreateAccess, DeleteAccess, None, ReadAccess, ShareAccess, and WriteAccess
-	    ///</summary>
-	    ///<param name="accessOptions" type="Object">
-	    /// A JavaScript Object with properties corresponding to the grantAccess Criteria
-	    /// that are valid for grantAccess operations.
-	    /// accessOptions.targetEntityName is a string represents the name of the target entity
-	    /// accessOptions.targetEntityId is a string represents the GUID of the target entity
-	    /// accessOptions.principalEntityName is a string represents the name of the principal entity
-	    /// accessOptions.principalEntityId is a string represents the GUID of the principal entity
-	    /// accessOptions.accessRights is a array represents the access conditions of the results
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var targetEntityName = accessOptions.targetEntityName;
-	    var targetEntityId = accessOptions.targetEntityId;
-	    var principalEntityName = accessOptions.principalEntityName;
-	    var principalEntityId = accessOptions.principalEntityId;
-	    var accessRights = accessOptions.accessRights;
-	    accessRights = isArray(accessRights) ? accessRights : [accessRights];
-	    var accessRightString = "";
-	    for (var i = 0, ilength = accessRights.length; i < ilength; i++) {
-	        accessRightString += Helper_1.encodeValue(accessRights[i]) + " ";
-	    }
-	    var request = ["<request i:type='b:GrantAccessRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-	        "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Target</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(targetEntityId), "</a:Id>",
-	        "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>PrincipalAccess</c:key>",
-	        "<c:value i:type='b:PrincipalAccess'>",
-	        "<b:AccessMask>", accessRightString, "</b:AccessMask>",
-	        "<b:Principal>",
-	        "<a:Id>", Helper_1.encodeValue(principalEntityId), "</a:Id>",
-	        "<a:LogicalName>", principalEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</b:Principal>",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>GrantAccess</a:RequestName>",
-	        "</request>"].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-	        var result = Helper_1.crmXmlDecode(responseText);
-	        if (!async)
-	            return result;
-	        else
-	            callback(result);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var modifyAccess = function (accessOptions, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to do a modifyAccess request.
-	    /// Levels of Access Options are: AppendAccess, AppendToAccess, AssignAccess, CreateAccess, DeleteAccess, None, ReadAccess, ShareAccess, and WriteAccess
-	    ///</summary>
-	    ///<param name="accessOptions" type="Object">
-	    /// A JavaScript Object with properties corresponding to the modifyAccess Criteria
-	    /// that are valid for modifyAccess operations.
-	    /// accessOptions.targetEntityName is a string represents the name of the target entity
-	    /// accessOptions.targetEntityId is a string represents the GUID of the target entity
-	    /// accessOptions.principalEntityName is a string represents the name of the principal entity
-	    /// accessOptions.principalEntityId is a string represents the GUID of the principal entity
-	    /// accessOptions.accessRights is a array represents the access conditions of the results
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var targetEntityName = accessOptions.targetEntityName;
-	    var targetEntityId = accessOptions.targetEntityId;
-	    var principalEntityName = accessOptions.principalEntityName;
-	    var principalEntityId = accessOptions.principalEntityId;
-	    var accessRights = accessOptions.accessRights;
-	    accessRights = isArray(accessRights) ? accessRights : [accessRights];
-	    var accessRightString = "";
-	    for (var i = 0, ilength = accessRights.length; i < ilength; i++) {
-	        accessRightString += Helper_1.encodeValue(accessRights[i]) + " ";
-	    }
-	    var request = ["<request i:type='b:ModifyAccessRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-	        "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Target</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(targetEntityId), "</a:Id>",
-	        "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>PrincipalAccess</c:key>",
-	        "<c:value i:type='b:PrincipalAccess'>",
-	        "<b:AccessMask>", accessRightString, "</b:AccessMask>",
-	        "<b:Principal>",
-	        "<a:Id>", Helper_1.encodeValue(principalEntityId), "</a:Id>",
-	        "<a:LogicalName>", principalEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</b:Principal>",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>ModifyAccess</a:RequestName>",
-	        "</request>"].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-	        var result = Helper_1.crmXmlDecode(responseText);
-	        if (!async)
-	            return result;
-	        else
-	            callback(result);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var revokeAccess = function (accessOptions, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to do a revokeAccess request.
-	    ///</summary>
-	    ///<param name="accessOptions" type="Object">
-	    /// A JavaScript Object with properties corresponding to the revokeAccess Criteria
-	    /// that are valid for revokeAccess operations.
-	    /// accessOptions.targetEntityName is a string represents the name of the target entity
-	    /// accessOptions.targetEntityId is a string represents the GUID of the target entity
-	    /// accessOptions.revokeeEntityName is a string represents the name of the revokee entity
-	    /// accessOptions.revokeeEntityId is a string represents the GUID of the revokee entity
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var targetEntityName = accessOptions.targetEntityName;
-	    var targetEntityId = accessOptions.targetEntityId;
-	    var revokeeEntityName = accessOptions.revokeeEntityName;
-	    var revokeeEntityId = accessOptions.revokeeEntityId;
-	    var request = ["<request i:type='b:RevokeAccessRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-	        "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Target</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(targetEntityId), "</a:Id>",
-	        "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Revokee</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(revokeeEntityId), "</a:Id>",
-	        "<a:LogicalName>", revokeeEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>RevokeAccess</a:RequestName>",
-	        "</request>"].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var responseText = HelperSoap_1.selectSingleNodeText(resultXml, "//ser:ExecuteResult");
-	        var result = Helper_1.crmXmlDecode(responseText);
-	        if (!async)
-	            return result;
-	        else
-	            callback(result);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var retrievePrincipalAccess = function (accessOptions, callback) {
-	    ///<summary>
-	    /// Sends synchronous/asynchronous request to do a retrievePrincipalAccess request.
-	    ///</summary>
-	    ///<param name="accessOptions" type="Object">
-	    /// A JavaScript Object with properties corresponding to the retrievePrincipalAccess Criteria
-	    /// that are valid for retrievePrincipalAccess operations.
-	    /// accessOptions.targetEntityName is a string represents the name of the target entity
-	    /// accessOptions.targetEntityId is a string represents the GUID of the target entity
-	    /// accessOptions.principalEntityName is a string represents the name of the principal entity
-	    /// accessOptions.principalEntityId is a string represents the GUID of the principal entity
-	    /// </param>
-	    ///<param name="callback" type="Function">
-	    /// A Function used for asynchronous request. If not defined, it sends a synchronous request.
-	    /// </param>
-	    var targetEntityName = accessOptions.targetEntityName;
-	    var targetEntityId = accessOptions.targetEntityId;
-	    var principalEntityName = accessOptions.principalEntityName;
-	    var principalEntityId = accessOptions.principalEntityId;
-	    var request = ["<request i:type='b:RetrievePrincipalAccessRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' xmlns:b='http://schemas.microsoft.com/crm/2011/Contracts'>",
-	        "<a:Parameters xmlns:c='http://schemas.datacontract.org/2004/07/System.Collections.Generic'>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Target</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(targetEntityId), "</a:Id>",
-	        "<a:LogicalName>", targetEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<c:key>Principal</c:key>",
-	        "<c:value i:type='a:EntityReference'>",
-	        "<a:Id>", Helper_1.encodeValue(principalEntityId), "</a:Id>",
-	        "<a:LogicalName>", principalEntityName, "</a:LogicalName>",
-	        "<a:Name i:nil='true' />",
-	        "</c:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil='true' />",
-	        "<a:RequestName>RetrievePrincipalAccess</a:RequestName>",
-	        "</request>"].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var result = HelperSoap_1.selectSingleNodeText(resultXml, "//b:value");
-	        if (!async)
-	            return result;
-	        else
-	            callback(result);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	// Added in 1.4.1 for metadata retrieval
-	// Inspired From Microsoft SDK code to retrieve Metadata using JavaScript
-	// Copyright (C) Microsoft Corporation.  All rights reserved.
-	var arrayElements = ["Attributes",
-	    "ManyToManyRelationships",
-	    "ManyToOneRelationships",
-	    "OneToManyRelationships",
-	    "Privileges",
-	    "LocalizedLabels",
-	    "Options",
-	    "Targets"];
-	var isMetadataArray = function (elementName) {
-	    for (var i = 0, ilength = arrayElements.length; i < ilength; i++) {
-	        if (elementName === arrayElements[i]) {
-	            return true;
-	        }
-	    }
-	    return false;
-	};
-	var getNodeName = function (node) {
-	    if (typeof (node.baseName) != "undefined") {
-	        return node.baseName;
-	    }
-	    else {
-	        return node.localName;
-	    }
-	};
-	var objectifyNode = function (node) {
-	    //Check for null
-	    if (node.attributes != null && node.attributes.length === 1) {
-	        if (node.attributes.getNamedItem("i:nil") != null && node.attributes.getNamedItem("i:nil").nodeValue === "true") {
-	            return null;
-	        }
-	    }
-	    //Check if it is a value
-	    if ((node.firstChild != null) && (node.firstChild.nodeType === 3)) {
-	        var nodeName = getNodeName(node);
-	        switch (nodeName) {
-	            //Integer Values
-	            case "ActivityTypeMask":
-	            case "ObjectTypeCode":
-	            case "ColumnNumber":
-	            case "DefaultFormValue":
-	            case "MaxValue":
-	            case "MinValue":
-	            case "MaxLength":
-	            case "Order":
-	            case "Precision":
-	            case "PrecisionSource":
-	            case "LanguageCode":
-	                return parseInt(node.firstChild.nodeValue, 10);
-	            // Boolean values
-	            case "AutoRouteToOwnerQueue":
-	            case "CanBeChanged":
-	            case "CanTriggerWorkflow":
-	            case "IsActivity":
-	            case "IsActivityParty":
-	            case "IsAvailableOffline":
-	            case "IsChildEntity":
-	            case "IsCustomEntity":
-	            case "IsCustomOptionSet":
-	            case "IsDocumentManagementEnabled":
-	            case "IsEnabledForCharts":
-	            case "IsGlobal":
-	            case "IsImportable":
-	            case "IsIntersect":
-	            case "IsManaged":
-	            case "IsReadingPaneEnabled":
-	            case "IsValidForAdvancedFind":
-	            case "CanBeSecuredForCreate":
-	            case "CanBeSecuredForRead":
-	            case "CanBeSecuredForUpdate":
-	            case "IsCustomAttribute":
-	            case "IsPrimaryId":
-	            case "IsPrimaryName":
-	            case "IsSecured":
-	            case "IsValidForCreate":
-	            case "IsValidForRead":
-	            case "IsValidForUpdate":
-	            case "IsCustomRelationship":
-	            case "CanBeBasic":
-	            case "CanBeDeep":
-	            case "CanBeGlobal":
-	            case "CanBeLocal":
-	                return (node.firstChild.nodeValue === "true") ? true : false;
-	            //OptionMetadata.Value and BooleanManagedProperty.Value and AttributeRequiredLevelManagedProperty.Value
-	            case "Value":
-	                //BooleanManagedProperty.Value
-	                if ((node.firstChild.nodeValue === "true") || (node.firstChild.nodeValue === "false")) {
-	                    return (node.firstChild.nodeValue === "true") ? true : false;
-	                }
-	                //AttributeRequiredLevelManagedProperty.Value
-	                if ((node.firstChild.nodeValue === "ApplicationRequired") ||
-	                    (node.firstChild.nodeValue === "None") ||
-	                    (node.firstChild.nodeValue === "Recommended") ||
-	                    (node.firstChild.nodeValue === "SystemRequired")) {
-	                    return node.firstChild.nodeValue;
-	                }
-	                else {
-	                    //OptionMetadata.Value
-	                    return parseInt(node.firstChild.nodeValue, 10);
-	                }
-	                // ReSharper disable JsUnreachableCode
-	                break;
-	            // ReSharper restore JsUnreachableCode
-	            //String values
-	            default:
-	                return node.firstChild.nodeValue;
-	        }
-	    }
-	    //Check if it is a known array
-	    if (isMetadataArray(getNodeName(node))) {
-	        var arrayValue = [];
-	        for (var iii = 0, tempLength = node.childNodes.length; iii < tempLength; iii++) {
-	            var objectTypeName;
-	            if ((node.childNodes[iii].attributes != null) && (node.childNodes[iii].attributes.getNamedItem("i:type") != null)) {
-	                objectTypeName = node.childNodes[iii].attributes.getNamedItem("i:type").nodeValue.split(":")[1];
-	            }
-	            else {
-	                objectTypeName = getNodeName(node.childNodes[iii]);
-	            }
-	            var b = objectifyNode(node.childNodes[iii]);
-	            b._type = objectTypeName;
-	            arrayValue.push(b);
-	        }
-	        return arrayValue;
-	    }
-	    //Null entity description labels are returned as <label/> - not using i:nil = true;
-	    if (node.childNodes.length === 0) {
-	        return null;
-	    }
-	    //Otherwise return an object
-	    var c = {};
-	    if (node.attributes.getNamedItem("i:type") != null) {
-	        c._type = node.attributes.getNamedItem("i:type").nodeValue.split(":")[1];
-	    }
-	    for (var i = 0, ilength = node.childNodes.length; i < ilength; i++) {
-	        if (node.childNodes[i].nodeType === 3) {
-	            c[getNodeName(node.childNodes[i])] = node.childNodes[i].nodeValue;
-	        }
-	        else {
-	            c[getNodeName(node.childNodes[i])] = objectifyNode(node.childNodes[i]);
-	        }
-	    }
-	    return c;
-	};
-	var retrieveAllEntitiesMetadata = function (entityFilters, retrieveIfPublished, callback) {
-	    ///<summary>
-	    /// Sends an synchronous/asynchronous RetrieveAllEntitieMetadata Request to retrieve all entities metadata in the system
-	    ///</summary>
-	    ///<returns>Entity Metadata Collection</returns>
-	    ///<param name="entityFilters" type="Array">
-	    /// The filter array available to filter which data is retrieved. Case Sensitive filters [Entity,Attributes,Privileges,Relationships]
-	    /// Include only those elements of the entity you want to retrieve in the array. Retrieving all parts of all entities may take significant time.
-	    ///</param>
-	    ///<param name="retrieveIfPublished" type="Boolean">
-	    /// Sets whether to retrieve the metadata that has not been published.
-	    ///</param>
-	    ///<param name="callBack" type="Function">
-	    /// The function that will be passed through and be called by a successful response.
-	    /// This function also used as an indicator if the function is synchronous/asynchronous
-	    ///</param>
-	    entityFilters = isArray(entityFilters) ? entityFilters : [entityFilters];
-	    var entityFiltersString = "";
-	    for (var iii = 0, templength = entityFilters.length; iii < templength; iii++) {
-	        entityFiltersString += Helper_1.encodeValue(entityFilters[iii]) + " ";
-	    }
-	    var request = [
-	        "<request i:type=\"a:RetrieveAllEntitiesRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">",
-	        "<a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>EntityFilters</b:key>",
-	        "<b:value i:type=\"c:EntityFilters\" xmlns:c=\"http://schemas.microsoft.com/xrm/2011/Metadata\">" + Helper_1.encodeValue(entityFiltersString) + "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>RetrieveAsIfPublished</b:key>",
-	        "<b:value i:type=\"c:boolean\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">" + Helper_1.encodeValue(retrieveIfPublished.toString()) + "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil=\"true\" />",
-	        "<a:RequestName>RetrieveAllEntities</a:RequestName>",
-	        "</request>"].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var response = selectNodes(resultXml, "//c:EntityMetadata");
-	        var results = [];
-	        for (var i = 0, ilength = response.length; i < ilength; i++) {
-	            var a = objectifyNode(response[i]);
-	            a._type = "EntityMetadata";
-	            results.push(a);
-	        }
-	        if (!async)
-	            return results;
-	        else
-	            callback(results);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var retrieveEntityMetadata = function (entityFilters, logicalName, retrieveIfPublished, callback) {
-	    ///<summary>
-	    /// Sends an synchronous/asynchronous RetreiveEntityMetadata Request to retrieve a particular entity metadata in the system
-	    ///</summary>
-	    ///<returns>Entity Metadata</returns>
-	    ///<param name="entityFilters" type="String">
-	    /// The filter string available to filter which data is retrieved. Case Sensitive filters [Entity,Attributes,Privileges,Relationships]
-	    /// Include only those elements of the entity you want to retrieve in the array. Retrieving all parts of all entities may take significant time.
-	    ///</param>
-	    ///<param name="logicalName" type="String">
-	    /// The string of the entity logical name
-	    ///</param>
-	    ///<param name="retrieveIfPublished" type="Boolean">
-	    /// Sets whether to retrieve the metadata that has not been published.
-	    ///</param>
-	    ///<param name="callBack" type="Function">
-	    /// The function that will be passed through and be called by a successful response.
-	    /// This function also used as an indicator if the function is synchronous/asynchronous
-	    ///</param>
-	    entityFilters = isArray(entityFilters) ? entityFilters : [entityFilters];
-	    var entityFiltersString = "";
-	    for (var iii = 0, templength = entityFilters.length; iii < templength; iii++) {
-	        entityFiltersString += Helper_1.encodeValue(entityFilters[iii]) + " ";
-	    }
-	    var request = [
-	        "<request i:type=\"a:RetrieveEntityRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">",
-	        "<a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>EntityFilters</b:key>",
-	        "<b:value i:type=\"c:EntityFilters\" xmlns:c=\"http://schemas.microsoft.com/xrm/2011/Metadata\">", Helper_1.encodeValue(entityFiltersString), "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>MetadataId</b:key>",
-	        "<b:value i:type=\"c:guid\"  xmlns:c=\"http://schemas.microsoft.com/2003/10/Serialization/\">", Helper_1.encodeValue("00000000-0000-0000-0000-000000000000"), "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>RetrieveAsIfPublished</b:key>",
-	        "<b:value i:type=\"c:boolean\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">", Helper_1.encodeValue(retrieveIfPublished.toString()), "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>LogicalName</b:key>",
-	        "<b:value i:type=\"c:string\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">", Helper_1.encodeValue(logicalName), "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil=\"true\" />",
-	        "<a:RequestName>RetrieveEntity</a:RequestName>",
-	        "</request>"].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var response = selectNodes(resultXml, "//b:value");
-	        var results = [];
-	        for (var i = 0, ilength = response.length; i < ilength; i++) {
-	            var a = objectifyNode(response[i]);
-	            a._type = "EntityMetadata";
-	            results.push(a);
-	        }
-	        if (!async)
-	            return results;
-	        else
-	            callback(results);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
-	var retrieveAttributeMetadata = function (entityLogicalName, attributeLogicalName, retrieveIfPublished, callback) {
-	    ///<summary>
-	    /// Sends an synchronous/asynchronous RetrieveAttributeMetadata Request to retrieve a particular entity's attribute metadata in the system
-	    ///</summary>
-	    ///<returns>Entity Metadata</returns>
-	    ///<param name="entityLogicalName" type="String">
-	    /// The string of the entity logical name
-	    ///</param>
-	    ///<param name="attributeLogicalName" type="String">
-	    /// The string of the entity's attribute logical name
-	    ///</param>
-	    ///<param name="retrieveIfPublished" type="Boolean">
-	    /// Sets whether to retrieve the metadata that has not been published.
-	    ///</param>
-	    ///<param name="callBack" type="Function">
-	    /// The function that will be passed through and be called by a successful response.
-	    /// This function also used as an indicator if the function is synchronous/asynchronous
-	    ///</param>
-	    var request = [
-	        "<request i:type=\"a:RetrieveAttributeRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">",
-	        "<a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>EntityLogicalName</b:key>",
-	        "<b:value i:type=\"c:string\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">", Helper_1.encodeValue(entityLogicalName), "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>MetadataId</b:key>",
-	        "<b:value i:type=\"ser:guid\"  xmlns:ser=\"http://schemas.microsoft.com/2003/10/Serialization/\">", Helper_1.encodeValue("00000000-0000-0000-0000-000000000000"), "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>RetrieveAsIfPublished</b:key>",
-	        "<b:value i:type=\"c:boolean\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">", Helper_1.encodeValue(retrieveIfPublished.toString()), "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "<a:KeyValuePairOfstringanyType>",
-	        "<b:key>LogicalName</b:key>",
-	        "<b:value i:type=\"c:string\"   xmlns:c=\"http://www.w3.org/2001/XMLSchema\">", Helper_1.encodeValue(attributeLogicalName), "</b:value>",
-	        "</a:KeyValuePairOfstringanyType>",
-	        "</a:Parameters>",
-	        "<a:RequestId i:nil=\"true\" />",
-	        "<a:RequestName>RetrieveAttribute</a:RequestName>",
-	        "</request>"].join("");
-	    var async = !!callback;
-	    return HelperSoap_1.doRequest(request, "Execute", async, function (resultXml) {
-	        var response = selectNodes(resultXml, "//b:value");
-	        var results = [];
-	        for (var i = 0, ilength = response.length; i < ilength; i++) {
-	            var a = objectifyNode(response[i]);
-	            results.push(a);
-	        }
-	        if (!async)
-	            return results;
-	        else
-	            callback(results);
-	        // ReSharper disable NotAllPathsReturnValue
-	    });
-	    // ReSharper restore NotAllPathsReturnValue
-	};
 
 
 /***/ },
@@ -2744,6 +2229,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function isArray(input) {
 	    return input.constructor.toString().indexOf("Array") !== -1;
 	}
+	exports.isArray = isArray;
 	function getError(async, resp, internalCallback) {
 	    //Error descriptions come from http://support.microsoft.com/kb/193625
 	    if (resp.status === 12029) {
@@ -2889,6 +2375,187 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	}
 	exports.fetchMore = fetchMore;
+	function joinArray(prefix, array, suffix) {
+	    var output = [];
+	    for (var i = 0, ilength = array.length; i < ilength; i++) {
+	        if (array[i] !== "" && array[i] != undefined) {
+	            output.push(prefix, array[i], suffix);
+	        }
+	    }
+	    return output.join("");
+	}
+	exports.joinArray = joinArray;
+	function joinConditionPair(attributes, values) {
+	    var output = [];
+	    for (var i = 0, ilength = attributes.length; i < ilength; i++) {
+	        if (attributes[i] !== "") {
+	            var value1 = values[i];
+	            if (typeof value1 == typeof []) {
+	                output.push("<condition attribute='", attributes[i], "' operator='in' >");
+	                for (var valueIndex in value1) {
+	                    if (value1.hasOwnProperty(valueIndex)) {
+	                        var value = encodeValue(value1[valueIndex]);
+	                        output.push("<value>" + value + "</value>");
+	                    }
+	                }
+	                output.push("</condition>");
+	            }
+	            else if (typeof value1 == typeof "") {
+	                output.push("<condition attribute='", attributes[i], "' operator='eq' value='", encodeValue(value1), "' />");
+	            }
+	        }
+	    }
+	    return output.join("");
+	}
+	exports.joinConditionPair = joinConditionPair;
+	// Added in 1.4.1 for metadata retrieval
+	// Inspired From Microsoft SDK code to retrieve Metadata using JavaScript
+	// Copyright (C) Microsoft Corporation.  All rights reserved.
+	var arrayElements = [
+	    "Attributes",
+	    "ManyToManyRelationships",
+	    "ManyToOneRelationships",
+	    "OneToManyRelationships",
+	    "Privileges",
+	    "LocalizedLabels",
+	    "Options",
+	    "Targets"
+	];
+	function isMetadataArray(elementName) {
+	    for (var i = 0, ilength = arrayElements.length; i < ilength; i++) {
+	        if (elementName === arrayElements[i]) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+	exports.isMetadataArray = isMetadataArray;
+	function getNodeName(node) {
+	    if (typeof (node.baseName) !== "undefined") {
+	        return node.baseName;
+	    }
+	    else {
+	        return node.localName;
+	    }
+	}
+	exports.getNodeName = getNodeName;
+	function objectifyNode(node) {
+	    //Check for null
+	    if (node.attributes != null && node.attributes.length === 1) {
+	        if (node.attributes.getNamedItem("i:nil") != null && node.attributes.getNamedItem("i:nil").nodeValue === "true") {
+	            return null;
+	        }
+	    }
+	    //Check if it is a value
+	    if ((node.firstChild != null) && (node.firstChild.nodeType === 3)) {
+	        var nodeName = getNodeName(node);
+	        switch (nodeName) {
+	            //Integer Values
+	            case "ActivityTypeMask":
+	            case "ObjectTypeCode":
+	            case "ColumnNumber":
+	            case "DefaultFormValue":
+	            case "MaxValue":
+	            case "MinValue":
+	            case "MaxLength":
+	            case "Order":
+	            case "Precision":
+	            case "PrecisionSource":
+	            case "LanguageCode":
+	                return parseInt(node.firstChild.nodeValue, 10);
+	            // Boolean values
+	            case "AutoRouteToOwnerQueue":
+	            case "CanBeChanged":
+	            case "CanTriggerWorkflow":
+	            case "IsActivity":
+	            case "IsActivityParty":
+	            case "IsAvailableOffline":
+	            case "IsChildEntity":
+	            case "IsCustomEntity":
+	            case "IsCustomOptionSet":
+	            case "IsDocumentManagementEnabled":
+	            case "IsEnabledForCharts":
+	            case "IsGlobal":
+	            case "IsImportable":
+	            case "IsIntersect":
+	            case "IsManaged":
+	            case "IsReadingPaneEnabled":
+	            case "IsValidForAdvancedFind":
+	            case "CanBeSecuredForCreate":
+	            case "CanBeSecuredForRead":
+	            case "CanBeSecuredForUpdate":
+	            case "IsCustomAttribute":
+	            case "IsPrimaryId":
+	            case "IsPrimaryName":
+	            case "IsSecured":
+	            case "IsValidForCreate":
+	            case "IsValidForRead":
+	            case "IsValidForUpdate":
+	            case "IsCustomRelationship":
+	            case "CanBeBasic":
+	            case "CanBeDeep":
+	            case "CanBeGlobal":
+	            case "CanBeLocal":
+	                return (node.firstChild.nodeValue === "true") ? true : false;
+	            //OptionMetadata.Value and BooleanManagedProperty.Value and AttributeRequiredLevelManagedProperty.Value
+	            case "Value":
+	                //BooleanManagedProperty.Value
+	                if ((node.firstChild.nodeValue === "true") || (node.firstChild.nodeValue === "false")) {
+	                    return (node.firstChild.nodeValue === "true") ? true : false;
+	                }
+	                //AttributeRequiredLevelManagedProperty.Value
+	                if ((node.firstChild.nodeValue === "ApplicationRequired") ||
+	                    (node.firstChild.nodeValue === "None") ||
+	                    (node.firstChild.nodeValue === "Recommended") ||
+	                    (node.firstChild.nodeValue === "SystemRequired")) {
+	                    return node.firstChild.nodeValue;
+	                }
+	                else {
+	                    //OptionMetadata.Value
+	                    return parseInt(node.firstChild.nodeValue, 10);
+	                }
+	            //String values
+	            default:
+	                return node.firstChild.nodeValue;
+	        }
+	    }
+	    //Check if it is a known array
+	    if (isMetadataArray(getNodeName(node))) {
+	        var arrayValue = [];
+	        for (var iii = 0, tempLength = node.childNodes.length; iii < tempLength; iii++) {
+	            var objectTypeName = void 0;
+	            if ((node.childNodes[iii].attributes != null) && (node.childNodes[iii].attributes.getNamedItem("i:type") != null)) {
+	                objectTypeName = node.childNodes[iii].attributes.getNamedItem("i:type").nodeValue.split(":")[1];
+	            }
+	            else {
+	                objectTypeName = getNodeName(node.childNodes[iii]);
+	            }
+	            var b = objectifyNode(node.childNodes[iii]);
+	            b._type = objectTypeName;
+	            arrayValue.push(b);
+	        }
+	        return arrayValue;
+	    }
+	    //Null entity description labels are returned as <label/> - not using i:nil = true;
+	    if (node.childNodes.length === 0) {
+	        return null;
+	    }
+	    //Otherwise return an object
+	    var c = {};
+	    if (node.attributes.getNamedItem("i:type") != null) {
+	        c._type = node.attributes.getNamedItem("i:type").nodeValue.split(":")[1];
+	    }
+	    for (var i = 0, ilength = node.childNodes.length; i < ilength; i++) {
+	        if (node.childNodes[i].nodeType === 3) {
+	            c[getNodeName(node.childNodes[i])] = node.childNodes[i].nodeValue;
+	        }
+	        else {
+	            c[getNodeName(node.childNodes[i])] = objectifyNode(node.childNodes[i]);
+	        }
+	    }
+	    return c;
+	}
+	exports.objectifyNode = objectifyNode;
 
 
 /***/ },

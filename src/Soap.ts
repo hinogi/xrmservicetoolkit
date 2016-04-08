@@ -113,7 +113,7 @@ export default class Soap{
         `;
         let async = !!callback;
 
-        return doRequest(request, "Execute", async, (resultXml: string) {
+        return doRequest(request, "Execute", async, (resultXml: string) => {
             let responseText = selectSingleNodeText(resultXml, "//a:Results");
             let result = crmXmlDecode(responseText);
 
