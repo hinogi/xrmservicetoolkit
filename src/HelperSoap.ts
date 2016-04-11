@@ -21,10 +21,18 @@ export function encodeDate(dateTime: Date): string {
         padNumber(dateTime.getSeconds());
 }
 
+function isGuid(guidString: string): boolean{
+    if( typeof guidString === "string" && guidString.test(/^\{?[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\}?$/i)){
+        return true;
+    } else {
+        return false;
+    }
+}
+
 export function encodeValue(value: any): any {
     // Handle GUIDs wrapped in braces
-    if (typeof value == typeof "" && value.slice(0, 1) === "{" && value.slice(-1) === "}") {
-        value = value.slice(1, -1);
+    if (isGuid(value)) {
+        value = value.replace(/[{}]/gi, "");
     }
 
     // ReSharper disable QualifiedExpressionMaybeNull
